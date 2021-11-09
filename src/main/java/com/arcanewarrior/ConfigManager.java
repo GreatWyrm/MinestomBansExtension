@@ -19,11 +19,9 @@ import java.util.UUID;
 public class ConfigManager {
 
 
-    private static final Path BANS_ROOT_FOLDER = Path.of("./extensions/BansExtension");
+    private static final Path BANS_ROOT_FOLDER = BansExtension.getInstance().getDataDirectory();
     private static final Path BANS_DATA_FILE = BANS_ROOT_FOLDER.resolve("bans.json");
     private static final Path BANS_CONFIG_FILE = BANS_ROOT_FOLDER.resolve("config.json");
-
-
 
     public static void initialize() {
         ensureFilesExist();
