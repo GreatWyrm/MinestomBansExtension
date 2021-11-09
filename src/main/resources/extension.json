@@ -1,0 +1,16 @@
+{
+  "entrypoint": "com.arcanewarrior.BansExtension",
+  "name": "BansExtension",
+  "version": "0.0.1",
+  "externalDependencies": {
+    "repositories": [
+      {
+        "name": "Central",
+        "url": "https://repo1.maven.org/maven2/"
+      }
+    ],
+    "artifacts": [
+      "com.fasterxml.jackson.core:jackson-databind:2.13.0"
+    ]
+  }
+}
