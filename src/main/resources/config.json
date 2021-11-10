@@ -1,4 +1,7 @@
 {
+  "database": {
+    "type": "local"
+  },
   "ban-permission": "minestom.ban",
   "unban-permission": "minestom.unban",
   "kick-permission": "minestom.kick"

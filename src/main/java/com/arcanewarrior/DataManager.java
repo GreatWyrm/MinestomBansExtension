@@ -1,5 +1,6 @@
 package com.arcanewarrior;
 
+import com.arcanewarrior.storage.StorageIO;
 import net.minestom.server.entity.Player;
 
 import java.util.HashMap;
@@ -12,8 +13,8 @@ public class DataManager {
 
     private final Map<UUID, BanDetails> banList = new HashMap<>();
 
-    public DataManager(ConfigManager configManager) {
-        banList.putAll(configManager.loadBanListFromFile());
+    public DataManager(StorageIO storage) {
+        banList.putAll(storage.loadAllBansFromStorage());
     }
 
     public boolean isIDBanned(UUID id) {

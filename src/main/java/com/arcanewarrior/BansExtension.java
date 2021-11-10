@@ -1,5 +1,6 @@
 package com.arcanewarrior;
 
+import com.arcanewarrior.storage.StorageIO;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.MinecraftServer;
@@ -20,6 +21,7 @@ public class BansExtension extends Extension {
 
     private DataManager dataManager;
     private ConfigManager configManager;
+    private StorageIO storageIO;
 
     public BansExtension() {
         extensionInstance = this;
@@ -29,7 +31,8 @@ public class BansExtension extends Extension {
     public void initialize() {
         getLogger().info("Initializing Bans Extension...");
         configManager = new ConfigManager();
-        dataManager = new DataManager(configManager);
+        storageIO = configManager.getStorageIO();
+        dataManager = new DataManager(storageIO);
         CommandsManager.registerAllCommands(configManager.loadPermissionsFromConfig());
 
         MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerPreLoginEvent.class, event -> {
@@ -41,13 +44,13 @@ public class BansExtension extends Extension {
 
     public void addBannedPlayer(Player player, String reason) {
         dataManager.addBannedPlayer(player, reason);
-        configManager.addBannedPlayerToConfig(player, reason);
+        storageIO.saveBannedPlayerToStorage(player, reason);
     }
 
     public void unbanPlayer(String username) {
         UUID id = dataManager.removeBannedPlayer(username);
         if(id != null) {
-            configManager.removeBannedPlayerFromConfig(id);
+            storageIO.removeBannedPlayerFromStorage(id);
         }
     }
 
