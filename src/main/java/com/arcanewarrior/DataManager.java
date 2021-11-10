@@ -12,12 +12,8 @@ public class DataManager {
 
     private final Map<UUID, BanDetails> banList = new HashMap<>();
 
-    public DataManager() {
-        loadBanListFile();
-    }
-
-    private void loadBanListFile() {
-        banList.putAll(ConfigManager.loadBanListFromFile());
+    public DataManager(ConfigManager configManager) {
+        banList.putAll(configManager.loadBanListFromFile());
     }
 
     public boolean isIDBanned(UUID id) {

@@ -23,13 +23,13 @@ public class KickCommand extends Command {
         ArgumentEntity players = ArgumentType.Entity("player").onlyPlayers(true);
         Argument<String> reason = ArgumentType.String("reason").setDefaultValue("Kicked from the Server!");
 
-        addSyntax(((sender, context) -> {
+        addSyntax((sender, context) -> {
             for(Entity entity : context.get(players).find(sender)) {
                 // Should only be players, but hey, cast just to be safe
                 if(entity instanceof Player player) {
                     player.kick(Component.text(context.get(reason), NamedTextColor.RED));
                 }
             }
-        }), players, reason);
+        }, players, reason);
     }
 }

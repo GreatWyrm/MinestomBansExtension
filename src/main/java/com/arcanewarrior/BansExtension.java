@@ -19,6 +19,7 @@ public class BansExtension extends Extension {
     }
 
     private DataManager dataManager;
+    private ConfigManager configManager;
 
     public BansExtension() {
         extensionInstance = this;
@@ -27,10 +28,9 @@ public class BansExtension extends Extension {
     @Override
     public void initialize() {
         getLogger().info("Initializing Bans Extension...");
-        ConfigManager.initialize();
-        dataManager = new DataManager();
-
-        CommandsManager.registerAllCommands();
+        configManager = new ConfigManager();
+        dataManager = new DataManager(configManager);
+        CommandsManager.registerAllCommands(configManager.loadPermissionsFromConfig());
 
         MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerPreLoginEvent.class, event -> {
            if(dataManager.isIDBanned(event.getPlayerUuid())) {
@@ -41,13 +41,13 @@ public class BansExtension extends Extension {
 
     public void addBannedPlayer(Player player, String reason) {
         dataManager.addBannedPlayer(player, reason);
-        ConfigManager.addBannedPlayerToConfig(player, reason);
+        configManager.addBannedPlayerToConfig(player, reason);
     }
 
     public void unbanPlayer(String username) {
         UUID id = dataManager.removeBannedPlayer(username);
         if(id != null) {
-            ConfigManager.removeBannedPlayerFromConfig(id);
+            configManager.removeBannedPlayerFromConfig(id);
         }
     }
 

@@ -11,14 +11,8 @@ import java.util.EnumMap;
 
 public class CommandsManager {
 
-    private static final EnumMap<Permissions, String> permissionMap = new EnumMap<>(Permissions.class);
-
-    public static void registerAllCommands() {
+    public static void registerAllCommands(EnumMap<Permissions, String> permissionMap) {
         CommandManager commandManager = MinecraftServer.getCommandManager();
-
-        permissionMap.put(Permissions.KICK, "minestom.kick");
-        permissionMap.put(Permissions.BAN, "minestom.ban");
-        permissionMap.put(Permissions.UNBAN, "minestom.unban");
 
         commandManager.register(new KickCommand(permissionMap.get(Permissions.KICK)));
         commandManager.register(new BanCommand(permissionMap.get(Permissions.BAN)));

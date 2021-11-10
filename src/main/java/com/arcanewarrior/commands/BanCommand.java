@@ -21,7 +21,7 @@ public class BanCommand extends Command {
         ArgumentEntity players = ArgumentType.Entity("player").onlyPlayers(true);
         Argument<String> reason = ArgumentType.String("reason").setDefaultValue("The Ban Hammer has spoken!");
 
-        addSyntax(((sender, context) -> {
+        addSyntax((sender, context) -> {
             String banReason = context.get(reason);
             for(Entity entity : context.get(players).find(sender)) {
                 // Should only be players, but hey, cast just to be safe
@@ -30,6 +30,6 @@ public class BanCommand extends Command {
                     BansExtension.getInstance().addBannedPlayer(player, banReason);
                 }
             }
-        }), players, reason);
+        }, players, reason);
     }
 }

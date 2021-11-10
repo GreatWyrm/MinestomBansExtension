@@ -18,6 +18,6 @@ public class UnbanCommand extends Command {
 
         // Technically could run into issues with username/UUID issues, maybe return a pair with username/uuid to solve duplicate username issue?
 
-        addSyntax(((sender, context) -> BansExtension.getInstance().unbanPlayer(context.get(players))), players);
+        addSyntax((sender, context) -> BansExtension.getInstance().unbanPlayer(context.get(players)), players);
     }
 }
