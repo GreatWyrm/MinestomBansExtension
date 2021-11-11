@@ -32,6 +32,7 @@ public class BansExtension extends Extension {
         getLogger().info("Initializing Bans Extension...");
         configManager = new ConfigManager();
         storageIO = configManager.getStorageIO();
+        storageIO.initializeIfEmpty();
         dataManager = new DataManager(storageIO);
         CommandsManager.registerAllCommands(configManager.loadPermissionsFromConfig());
 

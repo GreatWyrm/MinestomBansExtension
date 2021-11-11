@@ -2,6 +2,7 @@ package com.arcanewarrior;
 
 import com.arcanewarrior.commands.Permissions;
 import com.arcanewarrior.storage.LocalStorageIO;
+import com.arcanewarrior.storage.SQLiteStorageIO;
 import com.arcanewarrior.storage.StorageIO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -84,6 +85,9 @@ public class ConfigManager {
             switch (typeField.asText().toLowerCase()) {
                 case "local" -> {
                     return new LocalStorageIO();
+                }
+                case "sqlite" -> {
+                    return new SQLiteStorageIO();
                 }
                 default -> {
                     BansExtension.getInstance().getLogger().warn("Unknown database type " + typeField.asText() + " defaulting to local storage...");

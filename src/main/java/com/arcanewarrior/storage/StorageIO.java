@@ -9,6 +9,10 @@ import java.util.UUID;
 
 public interface StorageIO {
     /**
+     * Called when the storage is first instantiated, creates any necessary files/tables if they already do not exist
+     */
+    void initializeIfEmpty();
+    /**
      * Called when extension loads, caches all ban details from storage into the extension itself
      * @return A Map that contains the UUIDs of banned players mapped with the BanDetails record class
      */
