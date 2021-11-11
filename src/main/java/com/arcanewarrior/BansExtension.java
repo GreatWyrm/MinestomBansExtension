@@ -5,8 +5,10 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Player;
+import net.minestom.server.event.EventListener;
 import net.minestom.server.event.player.AsyncPlayerPreLoginEvent;
 import net.minestom.server.extensions.Extension;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +23,8 @@ public class BansExtension extends Extension {
 
     private DataManager dataManager;
     private ConfigManager configManager;
+    private CommandsManager commandsManager;
+    private BanListener banListener;
     private StorageIO storageIO;
 
     public BansExtension() {
@@ -30,17 +34,16 @@ public class BansExtension extends Extension {
     @Override
     public void initialize() {
         getLogger().info("Initializing Bans Extension...");
+
         configManager = new ConfigManager();
         storageIO = configManager.getStorageIO();
         storageIO.initializeIfEmpty();
         dataManager = new DataManager(storageIO);
-        CommandsManager.registerAllCommands(configManager.loadPermissionsFromConfig());
+        commandsManager = new CommandsManager();
+        commandsManager.registerAllCommands(configManager.loadPermissionsFromConfig());
 
-        MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerPreLoginEvent.class, event -> {
-           if(dataManager.isIDBanned(event.getPlayerUuid())) {
-               event.getPlayer().kick(Component.text("You have been banned from this server.\n" + dataManager.getBanReason(event.getPlayerUuid()), NamedTextColor.RED));
-           }
-        });
+        banListener = new BanListener();
+        MinecraftServer.getGlobalEventHandler().addListener(banListener);
     }
 
     public void addBannedPlayer(Player player, String reason) {
@@ -62,5 +65,21 @@ public class BansExtension extends Extension {
     @Override
     public void terminate() {
         getLogger().info("Terminating Bans Extension...");
+        commandsManager.unregisterAllCommands();
+        MinecraftServer.getGlobalEventHandler().removeListener(banListener);
+    }
+
+    private class BanListener implements EventListener<AsyncPlayerPreLoginEvent> {
+        @Override
+        public @NotNull Class<AsyncPlayerPreLoginEvent> eventType() {
+            return AsyncPlayerPreLoginEvent.class;
+        }
+        @Override
+        public @NotNull Result run(@NotNull AsyncPlayerPreLoginEvent event) {
+            if(dataManager.isIDBanned(event.getPlayerUuid())) {
+                event.getPlayer().kick(Component.text("You have been banned from this server.\n" + dataManager.getBanReason(event.getPlayerUuid()), NamedTextColor.RED));
+            }
+            return Result.SUCCESS;
+        }
     }
 }
