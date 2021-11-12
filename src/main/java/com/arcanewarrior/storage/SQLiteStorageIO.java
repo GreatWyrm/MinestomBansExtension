@@ -23,12 +23,13 @@ public class SQLiteStorageIO implements StorageIO {
     public void initializeIfEmpty(@NotNull Path rootExtensionFolder) {
         try {
             Class.forName("org.sqlite.JDBC");
-            sqLitePath = "jdbc:sqlite:" + rootExtensionFolder.resolve("test.db");
+            sqLitePath = "jdbc:sqlite:" + rootExtensionFolder.resolve("test.db").toAbsolutePath();
             Connection connection = DriverManager.getConnection(sqLitePath);
             String query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME +
                               "(" + uuidFieldName + " char(36) PRIMARY KEY NOT NULL," +
-                              usernameFieldName + "varchar(16) NOT NULL," +
-                              banReasonFieldName + "varchar(" + banReasonMaxLength + "))";
+                              usernameFieldName + " varchar(16) NOT NULL," +
+                              banReasonFieldName + " varchar(" + banReasonMaxLength + "))";
+            System.out.println(query);
             // TODO: For backwards compatibility, add ALTER TABLE statements here if the BanDetails gets any more information
             // For example, a ban date
             Statement statement = connection.createStatement();
