@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.github.Minestom:Minestom:ae08ac2987'
+    compileOnly 'com.github.Minestom:Minestom:48d8cbf10e'
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
     compileOnly group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.0'
     compileOnly 'org.xerial:sqlite-jdbc:3.36.0.3'
