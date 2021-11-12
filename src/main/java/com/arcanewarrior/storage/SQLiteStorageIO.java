@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class SQLiteStorageIO implements StorageIO {
 
-    private final String SQLitePath = "jdbc:sqlite:test.db";
+    private String sqLitePath;
     private final String TABLE_NAME = "BANLIST";
     private final String uuidFieldName = "UUID";
     private final String usernameFieldName = "username";
@@ -23,7 +23,8 @@ public class SQLiteStorageIO implements StorageIO {
     public void initializeIfEmpty(@NotNull Path rootExtensionFolder) {
         try {
             Class.forName("org.sqlite.JDBC");
-            Connection connection = DriverManager.getConnection(SQLitePath);
+            sqLitePath = "jdbc:sqlite:" + rootExtensionFolder.resolve("test.db");
+            Connection connection = DriverManager.getConnection(sqLitePath);
             String query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME +
                               "(" + uuidFieldName + " char(36) PRIMARY KEY NOT NULL," +
                               usernameFieldName + "varchar(16) NOT NULL," +
@@ -43,7 +44,7 @@ public class SQLiteStorageIO implements StorageIO {
     public Map<UUID, BanDetails> loadAllBansFromStorage() {
         HashMap<UUID, BanDetails> map = new HashMap<>();
         try {
-            Connection connection = DriverManager.getConnection(SQLitePath);
+            Connection connection = DriverManager.getConnection(sqLitePath);
             String query = "SELECT * FROM " + TABLE_NAME + ";";
             Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery(query);
@@ -73,7 +74,7 @@ public class SQLiteStorageIO implements StorageIO {
             reason = reason.substring(0, banReasonMaxLength);
         }
         try {
-            Connection connection = DriverManager.getConnection(SQLitePath);
+            Connection connection = DriverManager.getConnection(sqLitePath);
             String queryPrepared = "INSERT INTO " + TABLE_NAME + " (" + uuidFieldName + ", " + usernameFieldName + ", " + banReasonFieldName + ") VALUES (?,?,?)";
             PreparedStatement statement = connection.prepareStatement(queryPrepared);
             statement.setString(1, stripUUID(player.getUuid())); // Statements start from 1 >:(
@@ -90,7 +91,7 @@ public class SQLiteStorageIO implements StorageIO {
     @Override
     public void removeBannedPlayerFromStorage(@NotNull UUID id) {
         try {
-            Connection connection = DriverManager.getConnection(SQLitePath);
+            Connection connection = DriverManager.getConnection(sqLitePath);
             String query = "DELETE from " + TABLE_NAME + " where " + uuidFieldName + "=?;";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, stripUUID(id));
