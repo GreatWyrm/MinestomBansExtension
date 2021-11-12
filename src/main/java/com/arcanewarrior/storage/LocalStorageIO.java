@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.minestom.server.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,20 +22,23 @@ import java.util.UUID;
 
 public class LocalStorageIO implements StorageIO {
 
-    private static final Path BANS_DATA_FILE = BansExtension.getInstance().getDataDirectory().resolve("bans.json");
+    private final Logger logger = LoggerFactory.getLogger(LocalStorageIO.class);
+
+    private Path bansDataFile;
 
     @Override
-    public void initializeIfEmpty() {
-        if(!Files.exists(BANS_DATA_FILE)) {
-            BansExtension.getInstance().getLogger().info("Banlist file not found! Creating...");
+    public void initializeIfEmpty(@NotNull Path rootExtensionFolder) {
+        bansDataFile = rootExtensionFolder.resolve("bans.json");
+        if(!Files.exists(bansDataFile)) {
+            logger.info("Banlist file not found! Creating...");
             try {
-                Files.createFile(BANS_DATA_FILE);
+                Files.createFile(bansDataFile);
                 // Write out empty node to file
                 ObjectMapper mapper = new ObjectMapper();
                 ObjectNode node = mapper.createObjectNode();
-                mapper.writeValue(Files.newBufferedWriter(BANS_DATA_FILE), node);
+                mapper.writeValue(Files.newBufferedWriter(bansDataFile), node);
             } catch (IOException e) {
-                BansExtension.getInstance().getLogger().info("Failed to create banlist file!");
+                logger.info("Failed to create banlist file!");
                 e.printStackTrace();
             }
         }
@@ -44,7 +49,7 @@ public class LocalStorageIO implements StorageIO {
         ObjectMapper mapper = new ObjectMapper();
         HashMap<UUID, BanDetails> list = new HashMap<>();
         try {
-            JsonNode banList = mapper.readTree(Files.newBufferedReader(BANS_DATA_FILE));
+            JsonNode banList = mapper.readTree(Files.newBufferedReader(bansDataFile));
             for (Iterator<Map.Entry<String, JsonNode>> iterator = banList.fields(); iterator.hasNext(); ) {
                 Map.Entry<String, JsonNode> node = iterator.next();
                 // String should be UUID, JsonNode should contain ban reason and username
@@ -54,7 +59,7 @@ public class LocalStorageIO implements StorageIO {
                 list.put(id, new BanDetails(username, banReason));
             }
         } catch (IOException e) {
-            BansExtension.getInstance().getLogger().warn("Failed to load in ban list file!");
+            logger.warn("Failed to load in ban list file!");
             e.printStackTrace();
         }
         return list;
@@ -71,11 +76,11 @@ public class LocalStorageIO implements StorageIO {
 
         ObjectReader reader = mapper.readerForUpdating(parentNode);
         try {
-            JsonNode entireFile = reader.readTree(Files.newBufferedReader(BANS_DATA_FILE));
+            JsonNode entireFile = reader.readTree(Files.newBufferedReader(bansDataFile));
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
-            mapper.writeValue(Files.newBufferedWriter(BANS_DATA_FILE), entireFile);
+            mapper.writeValue(Files.newBufferedWriter(bansDataFile), entireFile);
         } catch (IOException e) {
-            BansExtension.getInstance().getLogger().warn("Failed to add player " + player.getUsername() + " to the ban list file.");
+            logger.warn("Failed to add player " + player.getUsername() + " to the ban list file.");
             e.printStackTrace();
         }
     }
@@ -84,16 +89,16 @@ public class LocalStorageIO implements StorageIO {
     public void removeBannedPlayerFromStorage(@NotNull UUID id) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            JsonNode nodes = mapper.readTree(Files.newBufferedReader(BANS_DATA_FILE));
+            JsonNode nodes = mapper.readTree(Files.newBufferedReader(bansDataFile));
             if(nodes instanceof ObjectNode objectNode) {
                 objectNode.remove(id.toString());
                 mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                mapper.writeValue(Files.newBufferedWriter(BANS_DATA_FILE), nodes);
+                mapper.writeValue(Files.newBufferedWriter(bansDataFile), nodes);
             } else {
-                BansExtension.getInstance().getLogger().warn("Could not modify bans list file, as it was not an instance of ObjectNode!");
+                logger.warn("Could not modify bans list file, as it was not an instance of ObjectNode!");
             }
         } catch (IOException e) {
-            BansExtension.getInstance().getLogger().warn("Failed to remove UUID " + id + " to the ban list file.");
+            logger.warn("Failed to remove UUID " + id + " to the ban list file.");
             e.printStackTrace();
         }
     }

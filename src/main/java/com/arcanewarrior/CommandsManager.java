@@ -15,13 +15,18 @@ import java.util.Set;
 public class CommandsManager {
 
     private final Set<Command> commands = new HashSet<>();
+    private final BanAction banAction;
+
+    public CommandsManager(BanAction banAction) {
+        this.banAction = banAction;
+    }
 
     public void registerAllCommands(EnumMap<Permissions, String> permissionMap) {
         CommandManager commandManager = MinecraftServer.getCommandManager();
 
         commands.add(new KickCommand(permissionMap.get(Permissions.KICK)));
-        commands.add(new BanCommand(permissionMap.get(Permissions.BAN)));
-        commands.add(new UnbanCommand(permissionMap.get(Permissions.UNBAN)));
+        commands.add(new BanCommand(permissionMap.get(Permissions.BAN), banAction));
+        commands.add(new UnbanCommand(permissionMap.get(Permissions.UNBAN), banAction));
 
         commands.forEach(commandManager::register);
     }

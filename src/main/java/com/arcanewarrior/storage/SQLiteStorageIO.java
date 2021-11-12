@@ -4,6 +4,7 @@ import com.arcanewarrior.BanDetails;
 import net.minestom.server.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +20,7 @@ public class SQLiteStorageIO implements StorageIO {
     private final int banReasonMaxLength = 100;
 
     @Override
-    public void initializeIfEmpty() {
+    public void initializeIfEmpty(@NotNull Path rootExtensionFolder) {
         try {
             Class.forName("org.sqlite.JDBC");
             Connection connection = DriverManager.getConnection(SQLitePath);

@@ -2,22 +2,19 @@ package com.arcanewarrior.commands;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.minestom.server.command.builder.Command;
 import net.minestom.server.command.builder.arguments.Argument;
 import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.command.builder.arguments.minecraft.ArgumentEntity;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.Player;
 
-public class KickCommand extends Command {
+public class KickCommand extends BaseCommand {
 
     // Maybe figure out how to display this message if permission fail, or should this just be removed?
     //private final Component NO_PERMISSION = Component.text("You do not have permission to use /kick.", NamedTextColor.RED);
 
     public KickCommand(String permissionName) {
-        super("kick");
-
-        setCondition(((sender, commandString) -> sender.hasPermission(permissionName) || sender.isConsole()));
+        super(permissionName, "kick");
         setDefaultExecutor((sender, context) -> sender.sendMessage("Usage: /kick [player] [reason]"));
 
         ArgumentEntity players = ArgumentType.Entity("player").onlyPlayers(true);

@@ -22,3 +22,9 @@ dependencies {
 shadowJar {
     archiveClassifier.set('')
 }
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}

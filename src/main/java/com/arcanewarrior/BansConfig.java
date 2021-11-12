@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,34 +17,37 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumMap;
 
-public class ConfigManager {
+public class BansConfig {
 
+    private final Logger logger = LoggerFactory.getLogger(BansConfig.class);
 
-    private static final Path BANS_ROOT_FOLDER = BansExtension.getInstance().getDataDirectory();
-    private static final Path BANS_CONFIG_FILE = BANS_ROOT_FOLDER.resolve("config.json");
+    private final Path bansRootFolder;
+    private final Path bansConfigPath;
 
-    public ConfigManager() {
+    public BansConfig(Path rootPath) {
+        bansRootFolder = rootPath;
+        bansConfigPath = rootPath.resolve("config.json");
         ensureFilesExist();
     }
 
     private void ensureFilesExist() {
-        if(!Files.exists(BANS_ROOT_FOLDER)) {
-            BansExtension.getInstance().getLogger().info("Config folder not found! Creating...");
+        if(!Files.exists(bansRootFolder)) {
+            logger.info("Config folder not found! Creating...");
             try {
-                Files.createDirectory(BANS_ROOT_FOLDER);
+                Files.createDirectory(bansRootFolder);
             } catch (IOException e) {
-                BansExtension.getInstance().getLogger().info("Failed to create root directory!");
+                logger.info("Failed to create root directory!");
                 e.printStackTrace();
             }
         }
-        if(!Files.exists(BANS_CONFIG_FILE)) {
-            BansExtension.getInstance().getLogger().info("Bans Config file not found! Creating...");
-            InputStream input = ConfigManager.class.getClassLoader().getResourceAsStream("config.json");
+        if(!Files.exists(bansConfigPath)) {
+            logger.info("Bans Config file not found! Creating...");
+            InputStream input = BansConfig.class.getClassLoader().getResourceAsStream("config.json");
             try {
                 if (input != null) {
-                    Files.copy(input, BANS_CONFIG_FILE);
+                    Files.copy(input, bansConfigPath);
                 } else {
-                    BansExtension.getInstance().getLogger().warn("config.json resource inputstream was null???");
+                    logger.warn("config.json resource inputstream was null???");
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -54,31 +59,31 @@ public class ConfigManager {
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         try {
-            JsonNode rootNode = mapper.readTree(Files.newBufferedReader(BANS_CONFIG_FILE));
+            JsonNode rootNode = mapper.readTree(Files.newBufferedReader(bansConfigPath));
             // Look for a database json object
             JsonNode databaseNode = rootNode.get("database");
             if(databaseNode == null || !databaseNode.isObject()) {
-                BansExtension.getInstance().getLogger().warn("Either database field does not exist or is not an object! Fixing config and using local storage.");
+                logger.warn("Either database field does not exist or is not an object! Fixing config and using local storage.");
                 if(rootNode instanceof ObjectNode objectNode) {
                     ObjectNode newNode = mapper.createObjectNode();
                     newNode.put("type", "local");
                     objectNode.set("database", newNode);
-                    mapper.writeValue(Files.newBufferedWriter(BANS_CONFIG_FILE), rootNode);
+                    mapper.writeValue(Files.newBufferedWriter(bansConfigPath), rootNode);
                 } else {
-                    BansExtension.getInstance().getLogger().warn("Failed to correct database field!");
+                    logger.warn("Failed to correct database field!");
                 }
                 return new LocalStorageIO();
             }
             // Database Field exists and is an object, proceed with reading
             JsonNode typeField = databaseNode.get("type");
             if(typeField == null || !typeField.isTextual()) {
-                BansExtension.getInstance().getLogger().warn("Either type field does not exist or is not an string! Fixing config and using local storage.");
+                logger.warn("Either type field does not exist or is not an string! Fixing config and using local storage.");
                 if(databaseNode instanceof ObjectNode objectNode && rootNode instanceof ObjectNode rootObject) {
                     objectNode.put("type", "local");
                     rootObject.replace("database", objectNode);
-                    mapper.writeValue(Files.newBufferedWriter(BANS_CONFIG_FILE), rootNode);
+                    mapper.writeValue(Files.newBufferedWriter(bansConfigPath), rootNode);
                 } else {
-                    BansExtension.getInstance().getLogger().warn("Failed to correct database field!");
+                    logger.warn("Failed to correct database field!");
                 }
                 return new LocalStorageIO();
             }
@@ -90,7 +95,7 @@ public class ConfigManager {
                     return new SQLiteStorageIO();
                 }
                 default -> {
-                    BansExtension.getInstance().getLogger().warn("Unknown database type " + typeField.asText() + " defaulting to local storage...");
+                    logger.warn("Unknown database type " + typeField.asText() + " defaulting to local storage...");
                     return new LocalStorageIO();
                 }
             }
@@ -105,13 +110,13 @@ public class ConfigManager {
         ObjectMapper mapper = new ObjectMapper();
         boolean shouldFixConfig = false;
         try {
-            JsonNode rootNode = mapper.readTree(Files.newBufferedReader(BANS_CONFIG_FILE));
+            JsonNode rootNode = mapper.readTree(Files.newBufferedReader(bansConfigPath));
             for(Permissions permission : Permissions.values()) {
                 String configString = permission.name().toLowerCase() + "-permission";
                 String defaultName = "minestom." + permission.name().toLowerCase();
                 JsonNode node = rootNode.get(configString);
                 if(node == null || !node.isTextual()) {
-                    BansExtension.getInstance().getLogger().warn("Either " + configString + " does not exist in the config, or it isn't a string! Correcting...");
+                    logger.warn("Either " + configString + " does not exist in the config, or it isn't a string! Correcting...");
                     permissions.put(permission, defaultName);
                     shouldFixConfig = true;
                     if(rootNode instanceof ObjectNode objectNode) {
@@ -123,7 +128,7 @@ public class ConfigManager {
             }
             if(shouldFixConfig) {
                 mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                mapper.writeValue(Files.newBufferedWriter(BANS_CONFIG_FILE), rootNode);
+                mapper.writeValue(Files.newBufferedWriter(bansConfigPath), rootNode);
             }
         } catch (IOException e) {
             e.printStackTrace();
