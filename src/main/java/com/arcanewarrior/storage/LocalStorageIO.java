@@ -1,7 +1,6 @@
 package com.arcanewarrior.storage;
 
 import com.arcanewarrior.BanDetails;
-import com.arcanewarrior.BansExtension;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
