@@ -17,8 +17,17 @@ public class BanAction {
     }
 
     public void addBannedPlayer(Player player, String reason) {
-        dataManager.addBannedPlayer(player, reason);
-        storageIO.saveBannedPlayerToStorage(player, reason);
+        BanDetails details = dataManager.addBannedPlayer(player, reason);
+        if(details != null) {
+            storageIO.saveBannedPlayerToStorage(details);
+        }
+    }
+
+    public void addBannedPlayer(UUID id, String username, String reason) {
+        BanDetails details = dataManager.addBannedPlayer(id, username, reason);
+        if(details != null) {
+            storageIO.saveBannedPlayerToStorage(details);
+        }
     }
 
     public void unbanPlayer(String username) {

@@ -1,4 +1,6 @@
 package com.arcanewarrior;
 
-public record BanDetails(String bannedUsername, String banReason) {
+import java.util.UUID;
+
+public record BanDetails(UUID uuid, String bannedUsername, String banReason) {
 }

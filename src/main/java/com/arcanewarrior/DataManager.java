@@ -29,10 +29,19 @@ public class DataManager {
         }
     }
 
-    public void addBannedPlayer(Player player, String reason) {
+    public BanDetails addBannedPlayer(Player player, String reason) {
         if(!isIDBanned(player.getUuid())) {
-            banList.put(player.getUuid(), new BanDetails(player.getUsername(), reason));
+            return banList.put(player.getUuid(), new BanDetails(player.getUuid(), player.getUsername(), reason));
+        } else {
+            return null;
         }
+    }
+
+    public BanDetails addBannedPlayer(UUID id, String username, String reason) {
+        if(!isIDBanned(id)) {
+            return banList.put(id, new BanDetails(id, username, reason));
+        }
+        return null;
     }
 
     public UUID removeBannedPlayer(String username) {

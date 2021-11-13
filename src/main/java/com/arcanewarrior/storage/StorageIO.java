@@ -1,7 +1,6 @@
 package com.arcanewarrior.storage;
 
 import com.arcanewarrior.BanDetails;
-import net.minestom.server.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -26,10 +25,9 @@ public interface StorageIO {
 
     /**
      * Saves a banned player to storage
-     * @param player The player that has been banned
-     * @param reason The reason for the ban
+     * @param banDetails All relevant details about the ban
      */
-    void saveBannedPlayerToStorage(@NotNull Player player, String reason);
+    void saveBannedPlayerToStorage(@NotNull BanDetails banDetails);
 
     /**
      * Removes a banned player from storage

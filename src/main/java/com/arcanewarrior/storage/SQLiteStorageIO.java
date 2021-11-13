@@ -1,7 +1,7 @@
 package com.arcanewarrior.storage;
 
 import com.arcanewarrior.BanDetails;
-import net.minestom.server.entity.Player;
+import com.arcanewarrior.UUIDUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -53,12 +53,8 @@ public class SQLiteStorageIO implements StorageIO {
                 String id = rs.getString(uuidFieldName);
                 String username = rs.getString(usernameFieldName);
                 String banReason = rs.getString(banReasonFieldName);
-                // Much thanks https://stackoverflow.com/questions/18986712/creating-a-uuid-from-a-string-with-no-dashes
-                UUID uuid = UUID.fromString(id
-                        .replaceFirst(
-                                "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)", "$1-$2-$3-$4-$5"
-                        ));
-                map.put(uuid, new BanDetails(username, banReason));
+                UUID uuid = UUIDUtils.makeUUIDFromStringWithoutDashes(id);
+                map.put(uuid, new BanDetails(uuid, username, banReason));
             }
             rs.close();
             statement.close();
@@ -70,7 +66,8 @@ public class SQLiteStorageIO implements StorageIO {
     }
 
     @Override
-    public void saveBannedPlayerToStorage(@NotNull Player player, String reason) {
+    public void saveBannedPlayerToStorage(@NotNull BanDetails details) {
+        String reason = details.banReason();
         if(reason.length() > banReasonMaxLength) {
             reason = reason.substring(0, banReasonMaxLength);
         }
@@ -78,8 +75,8 @@ public class SQLiteStorageIO implements StorageIO {
             Connection connection = DriverManager.getConnection(sqLitePath);
             String queryPrepared = "INSERT INTO " + TABLE_NAME + " (" + uuidFieldName + ", " + usernameFieldName + ", " + banReasonFieldName + ") VALUES (?,?,?)";
             PreparedStatement statement = connection.prepareStatement(queryPrepared);
-            statement.setString(1, stripUUID(player.getUuid())); // Statements start from 1 >:(
-            statement.setString(2, player.getUsername());
+            statement.setString(1, UUIDUtils.stripDashesFromUUID(details.uuid())); // Statements start from 1 >:(
+            statement.setString(2, details.bannedUsername());
             statement.setString(3, reason);
             statement.executeUpdate();
             statement.close();
@@ -95,16 +92,12 @@ public class SQLiteStorageIO implements StorageIO {
             Connection connection = DriverManager.getConnection(sqLitePath);
             String query = "DELETE from " + TABLE_NAME + " where " + uuidFieldName + "=?;";
             PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, stripUUID(id));
+            statement.setString(1, UUIDUtils.stripDashesFromUUID(id));
             statement.executeUpdate();
             statement.close();
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    private String stripUUID(UUID id) {
-        return id.toString().replaceAll("-", "");
     }
 }

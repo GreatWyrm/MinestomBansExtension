@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import net.minestom.server.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,7 @@ public class LocalStorageIO implements StorageIO {
                 UUID id = UUID.fromString(node.getKey());
                 String banReason = node.getValue().get("reason").asText("The Ban Hammer has spoken!");
                 String username = node.getValue().get("username").asText("Error: Username not Found!");
-                list.put(id, new BanDetails(username, banReason));
+                list.put(id, new BanDetails(id, username, banReason));
             }
         } catch (IOException e) {
             logger.warn("Failed to load in ban list file!");
@@ -65,13 +64,13 @@ public class LocalStorageIO implements StorageIO {
     }
 
     @Override
-    public void saveBannedPlayerToStorage(@NotNull Player player, String reason) {
+    public void saveBannedPlayerToStorage(@NotNull BanDetails details) {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode parentNode = mapper.createObjectNode();
         ObjectNode childNode = mapper.createObjectNode();
-        childNode.put("reason", reason);
-        childNode.put("username", player.getUsername());
-        parentNode.set(player.getUuid().toString(), childNode);
+        childNode.put("reason", details.banReason());
+        childNode.put("username", details.bannedUsername());
+        parentNode.set(details.uuid().toString(), childNode);
 
         ObjectReader reader = mapper.readerForUpdating(parentNode);
         try {
@@ -79,7 +78,7 @@ public class LocalStorageIO implements StorageIO {
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
             mapper.writeValue(Files.newBufferedWriter(bansDataFile), entireFile);
         } catch (IOException e) {
-            logger.warn("Failed to add player " + player.getUsername() + " to the ban list file.");
+            logger.warn("Failed to add player " + details.bannedUsername() + " to the ban list file.");
             e.printStackTrace();
         }
     }
