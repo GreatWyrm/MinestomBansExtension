@@ -23,6 +23,7 @@ public class BansConfig {
 
     private final Path bansRootFolder;
     private final Path bansConfigPath;
+    private String databasePath;
 
     public BansConfig(Path rootPath) {
         bansRootFolder = rootPath;
@@ -72,6 +73,7 @@ public class BansConfig {
                 } else {
                     logger.warn("Failed to correct database field!");
                 }
+                databasePath = "bans.json";
                 return new LocalStorageIO();
             }
             // Database Field exists and is an object, proceed with reading
@@ -83,9 +85,26 @@ public class BansConfig {
                     rootObject.replace("database", objectNode);
                     mapper.writeValue(Files.newBufferedWriter(bansConfigPath), rootNode);
                 } else {
-                    logger.warn("Failed to correct database field!");
+                    logger.warn("Failed to correct type field!");
                 }
+                databasePath = "bans.json";
                 return new LocalStorageIO();
+            }
+            JsonNode pathField = databaseNode.get("path");
+            if(pathField == null || !pathField.isTextual()) {
+                logger.warn("Either path field does not exist or is not an string! Fixing config.");
+                if(databaseNode instanceof ObjectNode objectNode && rootNode instanceof ObjectNode rootObject) {
+                    switch (typeField.asText().toLowerCase()) {
+                        case "local" -> databasePath = "bans.json";
+                        case "sqlite" -> databasePath = "bans.db";
+                        default -> databasePath = "bans";
+                    }
+                    objectNode.put("path", databasePath);
+                    rootObject.replace("database", objectNode);
+                    mapper.writeValue(Files.newBufferedWriter(bansConfigPath), rootNode);
+                } else {
+                    logger.warn("Failed to correct path field!");
+                }
             }
             switch (typeField.asText().toLowerCase()) {
                 case "local" -> {
@@ -134,5 +153,9 @@ public class BansConfig {
             e.printStackTrace();
         }
         return permissions;
+    }
+
+    public String getDatabasePath() {
+        return databasePath;
     }
 }

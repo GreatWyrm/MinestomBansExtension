@@ -1,6 +1,7 @@
 {
   "database": {
-    "type": "local"
+    "type": "local",
+    "path": "bans.json"
   },
   "ban-permission": "minestom.ban",
   "unban-permission": "minestom.unban",

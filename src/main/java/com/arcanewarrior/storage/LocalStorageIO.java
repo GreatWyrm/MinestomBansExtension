@@ -25,8 +25,11 @@ public class LocalStorageIO implements StorageIO {
     private Path bansDataFile;
 
     @Override
-    public void initializeIfEmpty(@NotNull Path rootExtensionFolder) {
-        bansDataFile = rootExtensionFolder.resolve("bans.json");
+    public void initializeIfEmpty(@NotNull Path rootExtensionFolder, String path) {
+        if(!path.endsWith(".json")) {
+            path += ".json";
+        }
+        bansDataFile = rootExtensionFolder.resolve(path);
         if(!Files.exists(bansDataFile)) {
             logger.info("Banlist file not found! Creating...");
             try {

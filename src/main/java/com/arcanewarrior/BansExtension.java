@@ -17,7 +17,7 @@ public class BansExtension extends Extension {
 
         config = new BansConfig(getDataDirectory());
         storageIO = config.getStorageIO();
-        storageIO.initializeIfEmpty(getDataDirectory());
+        storageIO.initializeIfEmpty(getDataDirectory(), config.getDatabasePath());
 
         dataManager = new DataManager(storageIO);
         commandsManager = new CommandsManager(new BanAction(storageIO, dataManager));

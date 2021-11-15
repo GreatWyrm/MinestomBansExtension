@@ -35,18 +35,13 @@ public class BanCommand extends BaseCommand {
                 }
             } else {
                 String offlinePlayer = context.getRaw(players);
-                // Throws an IllegalState if there's no one with that username - Minestom bug
-                try {
-                    var output = MojangUtils.fromUsername(offlinePlayer);
-                    // Output is of format {"name":Player Username,"id":UUID of Player (without dashes)}
-                    if(output != null) {
-                        String uuid = output.get("id").getAsString();
-                        banAction.addBannedPlayer(UUIDUtils.makeUUIDFromStringWithoutDashes(uuid), output.get("name").getAsString(), banReason);
-                    } else {
-                        sender.sendMessage("Error: Could not find offline player with name " + offlinePlayer);
-                    }
-                } catch (IllegalStateException e) {
-                    sender.sendMessage("No player exists with username: " + offlinePlayer);
+                var output = MojangUtils.fromUsername(offlinePlayer);
+                // Output is of format {"name":Player Username,"id":UUID of Player (without dashes)}
+                if(output != null) {
+                    String uuid = output.get("id").getAsString();
+                    banAction.addBannedPlayer(UUIDUtils.makeUUIDFromStringWithoutDashes(uuid), output.get("name").getAsString(), banReason);
+                } else {
+                    sender.sendMessage("Error: Could not find offline player with name " + offlinePlayer);
                 }
             }
         }, players, reason);
