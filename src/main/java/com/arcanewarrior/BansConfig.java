@@ -105,6 +105,8 @@ public class BansConfig {
                 } else {
                     logger.warn("Failed to correct path field!");
                 }
+            } else {
+                databasePath = pathField.asText();
             }
             switch (typeField.asText().toLowerCase()) {
                 case "local" -> {
