@@ -31,7 +31,7 @@ public class DataManager {
 
     public BanDetails addBannedPlayer(Player player, String reason) {
         if(!isIDBanned(player.getUuid())) {
-            return banList.put(player.getUuid(), new BanDetails(player.getUuid(), player.getUsername(), reason));
+            return addBannedPlayer(player.getUuid(), player.getUsername(), reason);
         } else {
             return null;
         }
@@ -39,7 +39,9 @@ public class DataManager {
 
     public BanDetails addBannedPlayer(UUID id, String username, String reason) {
         if(!isIDBanned(id)) {
-            return banList.put(id, new BanDetails(id, username, reason));
+            BanDetails details = new BanDetails(id, username, reason);
+            banList.put(id, details);
+            return details;
         }
         return null;
     }

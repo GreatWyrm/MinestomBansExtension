@@ -20,17 +20,24 @@ public class BanCommand extends BaseCommand {
         setDefaultExecutor((sender, context) -> sender.sendMessage("Usage: /ban [player] [reason]"));
 
         ArgumentEntity players = ArgumentType.Entity("player").onlyPlayers(true);
-        Argument<String> reason = ArgumentType.String("reason").setDefaultValue("The Ban Hammer has spoken!");
+        Argument<String[]> reason = ArgumentType.StringArray("reason").setDefaultValue(new String[]{"The Ban Hammer has spoken!"});
 
         addSyntax((sender, context) -> {
-            String banReason = context.get(reason);
+            // Create ban reason by concatenating the string array with spaces
+            StringBuilder banReason = new StringBuilder();
+            for(String s : context.get(reason)) {
+                banReason.append(s);
+                banReason.append(" ");
+            }
+            // Remove last space
+            banReason.deleteCharAt(banReason.length() - 1);
             List<Entity> entityList =  context.get(players).find(sender);
             if(entityList.size() > 0) {
                 for(Entity entity : entityList) {
                     // Should only be players, but hey, cast just to be safe
                     if(entity instanceof Player player) {
-                        player.kick(Component.text(banReason, NamedTextColor.RED));
-                        banAction.addBannedPlayer(player, banReason);
+                        player.kick(Component.text(banReason.toString(), NamedTextColor.RED));
+                        banAction.addBannedPlayer(player, banReason.toString());
                     }
                 }
             } else {
@@ -39,7 +46,7 @@ public class BanCommand extends BaseCommand {
                 // Output is of format {"name":Player Username,"id":UUID of Player (without dashes)}
                 if(output != null) {
                     String uuid = output.get("id").getAsString();
-                    banAction.addBannedPlayer(UUIDUtils.makeUUIDFromStringWithoutDashes(uuid), output.get("name").getAsString(), banReason);
+                    banAction.addBannedPlayer(UUIDUtils.makeUUIDFromStringWithoutDashes(uuid), output.get("name").getAsString(), banReason.toString());
                 } else {
                     sender.sendMessage("Error: Could not find offline player with name " + offlinePlayer);
                 }
