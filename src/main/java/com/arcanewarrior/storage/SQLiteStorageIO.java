@@ -1,6 +1,7 @@
 package com.arcanewarrior.storage;
 
 import com.arcanewarrior.BanDetails;
+import com.arcanewarrior.DatabaseDetails;
 import com.arcanewarrior.UUIDUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +21,8 @@ public class SQLiteStorageIO implements StorageIO {
     private final int banReasonMaxLength = 100;
 
     @Override
-    public void initializeIfEmpty(@NotNull Path rootExtensionFolder, String path) {
+    public void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details) {
+        String path = details.path();
         if(!path.endsWith(".db")) {
             path += ".db";
         }

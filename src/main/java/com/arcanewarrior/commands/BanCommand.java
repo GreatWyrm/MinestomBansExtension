@@ -30,7 +30,8 @@ public class BanCommand extends BaseCommand {
                 banReason.append(" ");
             }
             // Remove last space
-            banReason.deleteCharAt(banReason.length() - 1);
+            if(!banReason.isEmpty())
+                banReason.deleteCharAt(banReason.length() - 1);
             List<Entity> entityList =  context.get(players).find(sender);
             if(entityList.size() > 0) {
                 for(Entity entity : entityList) {

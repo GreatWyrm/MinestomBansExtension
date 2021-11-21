@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.arcanewarrior'
-version '0.1.6'
+version '0.1.7'
 
 repositories {
     mavenCentral()
@@ -17,6 +17,7 @@ dependencies {
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
     compileOnly group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.0'
     compileOnly 'org.xerial:sqlite-jdbc:3.36.0.3'
+    compileOnly 'org.mongodb:mongodb-driver-sync:4.4.0'
 }
 
 shadowJar {

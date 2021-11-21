@@ -1,6 +1,7 @@
 package com.arcanewarrior.storage;
 
 import com.arcanewarrior.BanDetails;
+import com.arcanewarrior.DatabaseDetails;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -25,7 +26,8 @@ public class LocalStorageIO implements StorageIO {
     private Path bansDataFile;
 
     @Override
-    public void initializeIfEmpty(@NotNull Path rootExtensionFolder, String path) {
+    public void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details) {
+        String path = details.path();
         if(!path.endsWith(".json")) {
             path += ".json";
         }

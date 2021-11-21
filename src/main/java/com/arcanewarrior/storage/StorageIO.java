@@ -1,6 +1,7 @@
 package com.arcanewarrior.storage;
 
 import com.arcanewarrior.BanDetails;
+import com.arcanewarrior.DatabaseDetails;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -15,9 +16,9 @@ public interface StorageIO {
     /**
      * Called when the storage is first instantiated, creates any necessary files/tables if they already do not exist
      * @param rootExtensionFolder - The root folder that this extension lives in for file operations
-     * @param path - The path that the file will live at
+     * @param details - The current details in the config.json, each implementation of StorageIO can use some, all, or none of these options
      */
-    void initializeIfEmpty(@NotNull Path rootExtensionFolder, String path);
+    void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details);
     /**
      * Called when extension loads, caches all ban details from storage into the extension itself
      * @return A Map that contains the UUIDs of banned players mapped with the BanDetails record class
