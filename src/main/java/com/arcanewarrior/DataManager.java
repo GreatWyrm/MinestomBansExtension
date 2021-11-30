@@ -1,5 +1,6 @@
 package com.arcanewarrior;
 
+import com.arcanewarrior.data.BanDetails;
 import com.arcanewarrior.storage.StorageIO;
 import net.minestom.server.entity.Player;
 
@@ -7,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class DataManager {
 
@@ -30,11 +30,7 @@ public class DataManager {
     }
 
     public BanDetails addBannedPlayer(Player player, String reason) {
-        if(!isIDBanned(player.getUuid())) {
-            return addBannedPlayer(player.getUuid(), player.getUsername(), reason);
-        } else {
-            return null;
-        }
+        return addBannedPlayer(player.getUuid(), player.getUsername(), reason);
     }
 
     public BanDetails addBannedPlayer(UUID id, String username, String reason) {
@@ -48,6 +44,7 @@ public class DataManager {
 
     public UUID removeBannedPlayer(String username) {
         // TODO: This could be async because we're doing a O(n) search and not interacting with API, but it probably doesn't really matter that much
+        // Or - create a map of UUID to username, and update that instead when removing a banned player
         for(var entry : banList.entrySet()) {
             if(entry.getValue().bannedUsername().equals(username)) {
                 banList.remove(entry.getKey());
@@ -58,6 +55,6 @@ public class DataManager {
     }
 
     public List<String> getBannedUsernames() {
-        return banList.values().stream().map(BanDetails::bannedUsername).collect(Collectors.toList());
+        return banList.values().stream().map(BanDetails::bannedUsername).toList();
     }
 }

@@ -1,4 +1,4 @@
-package com.arcanewarrior;
+package com.arcanewarrior.data;
 
 import com.arcanewarrior.commands.Permissions;
 import com.arcanewarrior.storage.LocalStorageIO;

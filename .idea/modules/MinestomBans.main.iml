@@ -4,8 +4,8 @@
     <facet type="minecraft" name="Minecraft">
       <configuration>
         <autoDetectTypes>
-          <platformType>MIXIN</platformType>
           <platformType>ADVENTURE</platformType>
+          <platformType>MIXIN</platformType>
         </autoDetectTypes>
       </configuration>
     </facet>

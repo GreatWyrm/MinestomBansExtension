@@ -1,4 +1,4 @@
-package com.arcanewarrior;
+package com.arcanewarrior.data;
 
 // Holds all the information contained in the parameters section of the database part of the config.json
 public record DatabaseDetails(

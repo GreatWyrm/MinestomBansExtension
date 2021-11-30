@@ -1,4 +1,4 @@
-package com.arcanewarrior;
+package com.arcanewarrior.data;
 
 import java.util.UUID;
 

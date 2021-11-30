@@ -1,8 +1,8 @@
 package com.arcanewarrior.storage;
 
-import com.arcanewarrior.BanDetails;
-import com.arcanewarrior.DatabaseDetails;
 import com.arcanewarrior.UUIDUtils;
+import com.arcanewarrior.data.BanDetails;
+import com.arcanewarrior.data.DatabaseDetails;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;

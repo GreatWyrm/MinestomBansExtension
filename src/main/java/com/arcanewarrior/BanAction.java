@@ -1,5 +1,6 @@
 package com.arcanewarrior;
 
+import com.arcanewarrior.data.BanDetails;
 import com.arcanewarrior.storage.StorageIO;
 import net.minestom.server.entity.Player;
 

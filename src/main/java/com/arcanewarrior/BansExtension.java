@@ -1,5 +1,6 @@
 package com.arcanewarrior;
 
+import com.arcanewarrior.data.BansConfig;
 import com.arcanewarrior.storage.StorageIO;
 import net.minestom.server.extensions.Extension;
 
