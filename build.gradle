@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.arcanewarrior'
-version '0.1.7'
+version '0.2.0'
 
 repositories {
     mavenCentral()
@@ -13,9 +13,10 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.github.Minestom:Minestom:62b9e80d46'
-    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
-    compileOnly group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.0'
+    compileOnly 'com.github.Minestom:Minestom:83ab75d1bf'
+    // https://github.com/SpongePowered/configurate
+    compileOnly 'org.spongepowered:configurate-gson:4.0.0'
+    compileOnly 'org.spongepowered:configurate-yaml:4.0.0'
     compileOnly 'org.xerial:sqlite-jdbc:3.36.0.3'
     compileOnly 'org.mongodb:mongodb-driver-sync:4.4.0'
 }

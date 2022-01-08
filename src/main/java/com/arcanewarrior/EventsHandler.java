@@ -36,6 +36,9 @@ public class EventsHandler {
             if(dataManager.isIDBanned(event.getPlayerUuid())) {
                 event.getPlayer().kick(Component.text("You have been banned from this server.\n" + dataManager.getBanReason(event.getPlayerUuid()), NamedTextColor.RED));
             }
+            if(dataManager.isIPBanned(event.getPlayer().getPlayerConnection().getRemoteAddress())) {
+                event.getPlayer().kick(Component.text("You have been banned from this server.", NamedTextColor.RED));
+            }
             return Result.SUCCESS;
         }
     }

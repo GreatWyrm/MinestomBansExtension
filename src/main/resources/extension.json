@@ -10,7 +10,8 @@
       }
     ],
     "artifacts": [
-      "com.fasterxml.jackson.core:jackson-databind:2.13.0",
+      "org.spongepowered:configurate-gson:4.0.0",
+      "org.spongepowered:configurate-yaml:4.0.0",
       "org.xerial:sqlite-jdbc:3.36.0.3",
       "org.mongodb:mongodb-driver-sync:4.4.0"
     ]

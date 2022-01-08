@@ -4,6 +4,7 @@ import com.arcanewarrior.data.BanDetails;
 import com.arcanewarrior.storage.StorageIO;
 import net.minestom.server.entity.Player;
 
+import java.net.SocketAddress;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +37,18 @@ public class BanAction {
         if(id != null) {
             storageIO.removeBannedPlayerFromStorage(id);
         }
+    }
+
+    public void addBannedIP(SocketAddress address, String reason) {
+        dataManager.addBannedIP(address);
+    }
+
+    public void unbanIpAddress(String address) {
+        throw new UnsupportedOperationException();
+    }
+
+    public List<String> getBannedIPs() {
+        return dataManager.getBannedIps();
     }
 
     public List<String> getBannedPlayerNames() {

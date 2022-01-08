@@ -26,6 +26,7 @@ public class BansExtension extends Extension {
 
         eventsHandler = new EventsHandler(dataManager);
         eventsHandler.registerEvents();
+        getLogger().info("Finished Bans Extension Initialization.");
     }
 
     @Override

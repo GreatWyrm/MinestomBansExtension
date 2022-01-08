@@ -2,20 +2,17 @@ package com.arcanewarrior.storage;
 
 import com.arcanewarrior.data.BanDetails;
 import com.arcanewarrior.data.DatabaseDetails;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongepowered.configurate.BasicConfigurationNode;
+import org.spongepowered.configurate.ConfigurateException;
+import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,10 +33,6 @@ public class LocalStorageIO implements StorageIO {
             logger.info("Banlist file not found! Creating...");
             try {
                 Files.createFile(bansDataFile);
-                // Write out empty node to file
-                ObjectMapper mapper = new ObjectMapper();
-                ObjectNode node = mapper.createObjectNode();
-                mapper.writeValue(Files.newBufferedWriter(bansDataFile), node);
             } catch (IOException e) {
                 logger.info("Failed to create banlist file!");
                 e.printStackTrace();
@@ -49,19 +42,29 @@ public class LocalStorageIO implements StorageIO {
 
     @Override
     public Map<UUID, BanDetails> loadAllBansFromStorage() {
-        ObjectMapper mapper = new ObjectMapper();
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(bansDataFile).build();
         HashMap<UUID, BanDetails> list = new HashMap<>();
+        boolean shouldSave = false;
         try {
-            JsonNode banList = mapper.readTree(Files.newBufferedReader(bansDataFile));
-            for (Iterator<Map.Entry<String, JsonNode>> iterator = banList.fields(); iterator.hasNext(); ) {
-                Map.Entry<String, JsonNode> node = iterator.next();
-                // String should be UUID, JsonNode should contain ban reason and username
-                UUID id = UUID.fromString(node.getKey());
-                String banReason = node.getValue().get("reason").asText("The Ban Hammer has spoken!");
-                String username = node.getValue().get("username").asText("Error: Username not Found!");
-                list.put(id, new BanDetails(id, username, banReason));
+            BasicConfigurationNode root = loader.load();
+            for(var entry : root.childrenMap().entrySet()) {
+                try {
+                    UUID id = UUID.fromString(entry.getKey().toString());
+                    BasicConfigurationNode node = entry.getValue();
+                    String reason = node.node("reason").getString();
+                    String username = node.node("username").getString();
+                    BanDetails details = new BanDetails(id, username, reason);
+                    list.put(id, details);
+                } catch (IllegalArgumentException e) {
+                    shouldSave = true;
+                    root.removeChild(entry.getKey());
+                    logger.warn("Invalid UUID detected when loading bans");
+                }
             }
-        } catch (IOException e) {
+            if(shouldSave) {
+                loader.save(root);
+            }
+        } catch (ConfigurateException e) {
             logger.warn("Failed to load in ban list file!");
             e.printStackTrace();
         }
@@ -70,19 +73,16 @@ public class LocalStorageIO implements StorageIO {
 
     @Override
     public void saveBannedPlayerToStorage(@NotNull BanDetails details) {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode parentNode = mapper.createObjectNode();
-        ObjectNode childNode = mapper.createObjectNode();
-        childNode.put("reason", details.banReason());
-        childNode.put("username", details.bannedUsername());
-        parentNode.set(details.uuid().toString(), childNode);
-
-        ObjectReader reader = mapper.readerForUpdating(parentNode);
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(bansDataFile).build();
         try {
-            JsonNode entireFile = reader.readTree(Files.newBufferedReader(bansDataFile));
-            mapper.enable(SerializationFeature.INDENT_OUTPUT);
-            mapper.writeValue(Files.newBufferedWriter(bansDataFile), entireFile);
-        } catch (IOException e) {
+            BasicConfigurationNode rootNode = loader.load();
+            BasicConfigurationNode node = loader.createNode();
+            node.node("reason").set(details.banReason());
+            node.node("username").set(details.bannedUsername());
+            rootNode.node(details.uuid().toString()).set(node);
+            loader.save(rootNode);
+
+        } catch (ConfigurateException e) {
             logger.warn("Failed to add player " + details.bannedUsername() + " to the ban list file.");
             e.printStackTrace();
         }
@@ -90,17 +90,12 @@ public class LocalStorageIO implements StorageIO {
 
     @Override
     public void removeBannedPlayerFromStorage(@NotNull UUID id) {
-        ObjectMapper mapper = new ObjectMapper();
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(bansDataFile).build();
         try {
-            JsonNode nodes = mapper.readTree(Files.newBufferedReader(bansDataFile));
-            if(nodes instanceof ObjectNode objectNode) {
-                objectNode.remove(id.toString());
-                mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                mapper.writeValue(Files.newBufferedWriter(bansDataFile), nodes);
-            } else {
-                logger.warn("Could not modify bans list file, as it was not an instance of ObjectNode!");
-            }
-        } catch (IOException e) {
+            BasicConfigurationNode root = loader.load();
+            root.removeChild(id.toString());
+            loader.save(root);
+        } catch (ConfigurateException e) {
             logger.warn("Failed to remove UUID " + id + " to the ban list file.");
             e.printStackTrace();
         }

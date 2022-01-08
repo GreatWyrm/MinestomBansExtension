@@ -29,9 +29,7 @@ public class MongoDBIO implements StorageIO {
     @Override
     public void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details) {
         // Connection String - create from username, password, and databaseName
-        mongoConnectionString = new ConnectionString("mongodb+srv://" +
-                details.username() + ":" + details.password() + "@" + details.databaseName().toLowerCase() +
-                ".dtgmi.mongodb.net/" + details.databaseName() + "?retryWrites=true&w=majority");
+        mongoConnectionString = new ConnectionString(details.connectionString());
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         var collection = database.getCollection(collectionName);
@@ -100,7 +98,6 @@ public class MongoDBIO implements StorageIO {
 
     private BanDetails convertFromDocument(Document document) {
         if(document.containsKey(uuidFieldName)) {
-            System.out.println(UUIDUtils.makeUUIDFromStringWithoutDashes(document.getString(uuidFieldName)));
             return new BanDetails(
                     UUIDUtils.makeUUIDFromStringWithoutDashes(document.getString(uuidFieldName)),
                     document.getString(usernameFieldName),

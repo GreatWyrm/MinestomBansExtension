@@ -4,14 +4,14 @@ import com.arcanewarrior.data.BanDetails;
 import com.arcanewarrior.storage.StorageIO;
 import net.minestom.server.entity.Player;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.*;
 
 public class DataManager {
 
     private final Map<UUID, BanDetails> banList = new HashMap<>();
+    private final Set<InetSocketAddress> ipBanList = new HashSet<>();
 
     public DataManager(StorageIO storage) {
         banList.putAll(storage.loadAllBansFromStorage());
@@ -19,6 +19,14 @@ public class DataManager {
 
     public boolean isIDBanned(UUID id) {
         return banList.containsKey(id);
+    }
+
+    public boolean isIPBanned(SocketAddress address) {
+        if(address instanceof InetSocketAddress inetAddress) {
+            // Equals also compares port number, and we just want to compare hostname/InetAddress
+            //return ipBanList.contains(inetAddress);
+        }
+        return false;
     }
 
     public String getBanReason(UUID id) {
@@ -54,7 +62,17 @@ public class DataManager {
         return null;
     }
 
+    public void addBannedIP(SocketAddress address) {
+        if(address instanceof InetSocketAddress inetAddress && !isIPBanned(inetAddress)) {
+            ipBanList.add(inetAddress);
+        }
+    }
+
     public List<String> getBannedUsernames() {
         return banList.values().stream().map(BanDetails::bannedUsername).toList();
+    }
+
+    public List<String> getBannedIps() {
+        return ipBanList.stream().map(Object::toString).toList();
     }
 }

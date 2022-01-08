@@ -1,9 +1,6 @@
 package com.arcanewarrior;
 
-import com.arcanewarrior.commands.BanCommand;
-import com.arcanewarrior.commands.KickCommand;
-import com.arcanewarrior.commands.Permissions;
-import com.arcanewarrior.commands.UnbanCommand;
+import com.arcanewarrior.commands.*;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.CommandManager;
 import net.minestom.server.command.builder.Command;
@@ -27,6 +24,8 @@ public class CommandsManager {
         commands.add(new KickCommand(permissionMap.get(Permissions.KICK)));
         commands.add(new BanCommand(permissionMap.get(Permissions.BAN), banAction));
         commands.add(new UnbanCommand(permissionMap.get(Permissions.UNBAN), banAction));
+        commands.add(new BanIPCommand(permissionMap.get(Permissions.BAN_IP), banAction));
+        commands.add(new UnbanIPCommand(permissionMap.get(Permissions.UNBAN_IP), banAction));
 
         commands.forEach(commandManager::register);
     }

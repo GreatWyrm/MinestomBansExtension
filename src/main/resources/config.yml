@@ -1,0 +1,12 @@
+database:
+    type: "local"
+    path: "bans"
+    # Used to connect to a MongoDB database, must be fully qualified
+    connection-string: ''
+
+# All the names of the permissions
+ban-permission: "minestom.ban"
+unban-permission: "minestom.unban"
+kick-permission: "minestom.kick"
+ban-ip-permission: "minestom.ban-ip"
+unban-ip-permission: "minestom.unban-ip"
