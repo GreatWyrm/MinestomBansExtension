@@ -24,7 +24,8 @@ public class MongoDBIO implements StorageIO {
     private ConnectionString mongoConnectionString;
 
     private final String databaseName = "bans";
-    private final String collectionName = "banlist";
+    private final String playerCollectionName = "banlist";
+    private final String ipCollectionName = "ipbanlist";
 
     @Override
     public void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details) {
@@ -32,7 +33,8 @@ public class MongoDBIO implements StorageIO {
         mongoConnectionString = new ConnectionString(details.connectionString());
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
-        var collection = database.getCollection(collectionName);
+        var collection = database.getCollection(playerCollectionName);
+        var ipCollection = database.getCollection(ipCollectionName);
         mongoClient.close();
     }
 
@@ -41,11 +43,11 @@ public class MongoDBIO implements StorageIO {
         HashMap<UUID, BanDetails> detailsMap = new HashMap<>();
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
-        var collection = database.getCollection(collectionName);
+        var collection = database.getCollection(playerCollectionName);
         Bson projectionFields = Projections.fields(Projections.excludeId());
         for (Document next : collection.find()
                 .projection(projectionFields)) {
-            BanDetails details = convertFromDocument(next);
+            BanDetails details = convertPlayerBanFromDocument(next);
             if (details != null) {
                 detailsMap.put(details.uuid(), details);
             }
@@ -57,15 +59,28 @@ public class MongoDBIO implements StorageIO {
 
     @Override
     public Map<String, String> loadIpBansFromStorage() {
-        throw new UnsupportedOperationException();
+        HashMap<String, String> detailsMap = new HashMap<>();
+        MongoClient mongoClient = createClient();
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        var collection = database.getCollection(ipCollectionName);
+        Bson projectionFields = Projections.fields(Projections.excludeId());
+        for (Document next : collection.find()
+                .projection(projectionFields)) {
+            StringPair details = convertIpBanFromDocument(next);
+            if (details != null) {
+                detailsMap.put(details.ip(), details.reason());
+            }
+        }
+        mongoClient.close();
+        return detailsMap;
     }
 
     @Override
     public void saveBannedPlayerToStorage(@NotNull BanDetails banDetails) {
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
-        var collection = database.getCollection(collectionName);
-        collection.insertOne(convertToDocument(banDetails));
+        var collection = database.getCollection(playerCollectionName);
+        collection.insertOne(convertPlayerBanToDocument(banDetails));
         mongoClient.close();
     }
 
@@ -73,7 +88,7 @@ public class MongoDBIO implements StorageIO {
     public void removeBannedPlayerFromStorage(@NotNull UUID id) {
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
-        var collection = database.getCollection(collectionName);
+        var collection = database.getCollection(playerCollectionName);
         Bson query = Filters.eq(uuidFieldName, UUIDUtils.stripDashesFromUUID(id));
         try {
             collection.deleteOne(query);
@@ -85,12 +100,25 @@ public class MongoDBIO implements StorageIO {
 
     @Override
     public void saveBannedIpToStorage(@NotNull String ipString, @NotNull String reasonString) {
-
+        MongoClient mongoClient = createClient();
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        var collection = database.getCollection(ipCollectionName);
+        collection.insertOne(convertIpBanToDocument(ipString, reasonString));
+        mongoClient.close();
     }
 
     @Override
     public void removeBannedIpFromStorage(@NotNull String ipString) {
-
+        MongoClient mongoClient = createClient();
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        var collection = database.getCollection(ipCollectionName);
+        Bson query = Filters.eq(ipFieldName, ipString);
+        try {
+            collection.deleteOne(query);
+        } catch (MongoException me) {
+            me.printStackTrace();
+        }
+        mongoClient.close();
     }
 
     private MongoClient createClient() {
@@ -101,8 +129,9 @@ public class MongoDBIO implements StorageIO {
     private final String uuidFieldName = "uuid";
     private final String usernameFieldName = "username";
     private final String reasonFieldName = "reason";
+    private final String ipFieldName = "ip";
 
-    private Document convertToDocument(BanDetails details) {
+    private Document convertPlayerBanToDocument(BanDetails details) {
         return new Document(
                 uuidFieldName, UUIDUtils.stripDashesFromUUID(details.uuid())
         ).append(
@@ -112,7 +141,7 @@ public class MongoDBIO implements StorageIO {
         );
     }
 
-    private BanDetails convertFromDocument(Document document) {
+    private BanDetails convertPlayerBanFromDocument(Document document) {
         if(document.containsKey(uuidFieldName)) {
             return new BanDetails(
                     UUIDUtils.makeUUIDFromStringWithoutDashes(document.getString(uuidFieldName)),
@@ -123,4 +152,25 @@ public class MongoDBIO implements StorageIO {
             return null;
         }
     }
+
+    private Document convertIpBanToDocument(String ip, String reason) {
+        return new Document(
+                ipFieldName, ip
+        ).append(
+                reasonFieldName, reason
+        );
+    }
+
+    private StringPair convertIpBanFromDocument(Document document) {
+        if(document.containsKey(ipFieldName)) {
+            return new StringPair(
+                   document.getString(ipFieldName),
+                    document.getString(reasonFieldName)
+            );
+        } else {
+            return null;
+        }
+    }
+
+    private record StringPair(String ip, String reason) {}
 }

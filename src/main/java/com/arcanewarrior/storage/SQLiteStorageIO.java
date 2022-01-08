@@ -15,7 +15,9 @@ public class SQLiteStorageIO implements StorageIO {
 
     private String sqLitePath;
     private final String TABLE_NAME = "BANLIST";
+    private final String IP_TABLE_NAME = "IPBANLIST";
     private final String uuidFieldName = "UUID";
+    private final String ipFieldName = "IP";
     private final String usernameFieldName = "username";
     private final String banReasonFieldName = "banreason";
     private final int banReasonMaxLength = 100;
@@ -30,14 +32,18 @@ public class SQLiteStorageIO implements StorageIO {
             Class.forName("org.sqlite.JDBC");
             sqLitePath = "jdbc:sqlite:" + rootExtensionFolder.resolve(path).toAbsolutePath();
             Connection connection = DriverManager.getConnection(sqLitePath);
-            String query = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME +
+            String playerTableQuery = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME +
                               "(" + uuidFieldName + " char(36) PRIMARY KEY NOT NULL," +
                               usernameFieldName + " varchar(16) NOT NULL," +
                               banReasonFieldName + " varchar(" + banReasonMaxLength + "))";
             // TODO: For backwards compatibility, add ALTER TABLE statements here if the BanDetails gets any more information
             // For example, a ban date
+            String ipTableQuery = "CREATE TABLE IF NOT EXISTS " + IP_TABLE_NAME +
+                    "(" + ipFieldName + " varchar(50) PRIMARY KEY NOT NULL," +
+                    banReasonFieldName + " varchar(" + banReasonMaxLength + "))";
             Statement statement = connection.createStatement();
-            statement.executeUpdate(query);
+            statement.executeUpdate(playerTableQuery);
+            statement.executeUpdate(ipTableQuery);
             statement.close();
             connection.close();
         } catch (SQLException | ClassNotFoundException e) {
@@ -72,7 +78,24 @@ public class SQLiteStorageIO implements StorageIO {
 
     @Override
     public Map<String, String> loadIpBansFromStorage() {
-        throw new UnsupportedOperationException();
+        HashMap<String, String> map = new HashMap<>();
+        try {
+            Connection connection = DriverManager.getConnection(sqLitePath);
+            String query = "SELECT * FROM " + IP_TABLE_NAME + ";";
+            Statement statement = connection.createStatement();
+            ResultSet rs = statement.executeQuery(query);
+            while(rs.next()) {
+                String id = rs.getString(ipFieldName);
+                String banReason = rs.getString(banReasonFieldName);
+                map.put(id, banReason);
+            }
+            rs.close();
+            statement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return map;
     }
 
     @Override
@@ -113,11 +136,35 @@ public class SQLiteStorageIO implements StorageIO {
 
     @Override
     public void saveBannedIpToStorage(@NotNull String ipString, @NotNull String reasonString) {
-
+        if(reasonString.length() > banReasonMaxLength) {
+            reasonString = reasonString.substring(0, banReasonMaxLength);
+        }
+        try {
+            Connection connection = DriverManager.getConnection(sqLitePath);
+            String queryPrepared = "INSERT INTO " + IP_TABLE_NAME + " (" + ipFieldName + ", " + banReasonFieldName + ") VALUES (?,?)";
+            PreparedStatement statement = connection.prepareStatement(queryPrepared);
+            statement.setString(1, ipString); // Statements start from 1 >:(
+            statement.setString(2, reasonString);
+            statement.executeUpdate();
+            statement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void removeBannedIpFromStorage(@NotNull String ipString) {
-
+        try {
+            Connection connection = DriverManager.getConnection(sqLitePath);
+            String query = "DELETE from " + IP_TABLE_NAME + " where " + ipString + "=?;";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, ipString);
+            statement.executeUpdate();
+            statement.close();
+            connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
