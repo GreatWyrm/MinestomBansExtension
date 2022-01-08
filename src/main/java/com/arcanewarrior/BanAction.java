@@ -40,11 +40,17 @@ public class BanAction {
     }
 
     public void addBannedIP(SocketAddress address, String reason) {
-        dataManager.addBannedIP(address);
+        String ipStringAddress = dataManager.addBannedIP(address, reason);
+        if(ipStringAddress != null) {
+            storageIO.saveBannedIpToStorage(ipStringAddress, reason);
+        }
     }
 
     public void unbanIpAddress(String address) {
-        throw new UnsupportedOperationException();
+        String ipAddress = dataManager.removeBannedIP(address);
+        if(ipAddress != null) {
+            storageIO.removeBannedIpFromStorage(address);
+        }
     }
 
     public List<String> getBannedIPs() {

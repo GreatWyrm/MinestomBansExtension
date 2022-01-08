@@ -20,29 +20,44 @@ public class LocalStorageIO implements StorageIO {
 
     private final Logger logger = LoggerFactory.getLogger(LocalStorageIO.class);
 
-    private Path bansDataFile;
+    private Path playerBansDataFile;
+    private Path ipBansDataFile;
 
     @Override
     public void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details) {
-        String path = details.path();
-        if(!path.endsWith(".json")) {
-            path += ".json";
+        String playerPath = details.playerBanPath();
+        if(!playerPath.endsWith(".json")) {
+            playerPath += ".json";
         }
-        bansDataFile = rootExtensionFolder.resolve(path);
-        if(!Files.exists(bansDataFile)) {
-            logger.info("Banlist file not found! Creating...");
+        playerBansDataFile = rootExtensionFolder.resolve(playerPath);
+        String ipPath = details.ipBanPath();
+        if(!ipPath.endsWith(".json")) {
+            ipPath += ".json";
+        }
+        ipBansDataFile = rootExtensionFolder.resolve(ipPath);
+        if(!Files.exists(playerBansDataFile)) {
+            logger.info("Player Ban list file not found! Creating...");
             try {
-                Files.createFile(bansDataFile);
+                Files.createFile(playerBansDataFile);
             } catch (IOException e) {
-                logger.info("Failed to create banlist file!");
+                logger.info("Failed to create player banlist file!");
+                e.printStackTrace();
+            }
+        }
+        if(!Files.exists(ipBansDataFile)) {
+            logger.info("IP Ban list file not found! Creating...");
+            try {
+                Files.createFile(ipBansDataFile);
+            } catch (IOException e) {
+                logger.info("Failed to create ip banlist file!");
                 e.printStackTrace();
             }
         }
     }
 
     @Override
-    public Map<UUID, BanDetails> loadAllBansFromStorage() {
-        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(bansDataFile).build();
+    public Map<UUID, BanDetails> loadPlayerBansFromStorage() {
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(playerBansDataFile).build();
         HashMap<UUID, BanDetails> list = new HashMap<>();
         boolean shouldSave = false;
         try {
@@ -65,7 +80,26 @@ public class LocalStorageIO implements StorageIO {
                 loader.save(root);
             }
         } catch (ConfigurateException e) {
-            logger.warn("Failed to load in ban list file!");
+            logger.warn("Failed to load in player ban list file!");
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    @Override
+    public Map<String, String> loadIpBansFromStorage() {
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(ipBansDataFile).build();
+        HashMap<String, String> list = new HashMap<>();
+        try {
+            BasicConfigurationNode root = loader.load();
+            for(var entry : root.childrenMap().entrySet()) {
+                String address = entry.getKey().toString();
+                BasicConfigurationNode node = entry.getValue();
+                String reason = node.node("reason").getString();
+                list.put(address, reason);
+            }
+        } catch (ConfigurateException e) {
+            logger.warn("Failed to load in ip ban list file!");
             e.printStackTrace();
         }
         return list;
@@ -73,7 +107,7 @@ public class LocalStorageIO implements StorageIO {
 
     @Override
     public void saveBannedPlayerToStorage(@NotNull BanDetails details) {
-        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(bansDataFile).build();
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(playerBansDataFile).build();
         try {
             BasicConfigurationNode rootNode = loader.load();
             BasicConfigurationNode node = loader.createNode();
@@ -90,13 +124,41 @@ public class LocalStorageIO implements StorageIO {
 
     @Override
     public void removeBannedPlayerFromStorage(@NotNull UUID id) {
-        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(bansDataFile).build();
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(playerBansDataFile).build();
         try {
             BasicConfigurationNode root = loader.load();
             root.removeChild(id.toString());
             loader.save(root);
         } catch (ConfigurateException e) {
             logger.warn("Failed to remove UUID " + id + " to the ban list file.");
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void saveBannedIpToStorage(@NotNull String ipString, @NotNull String reasonString) {
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(ipBansDataFile).build();
+        try {
+            BasicConfigurationNode rootNode = loader.load();
+            BasicConfigurationNode node = loader.createNode();
+            node.node("reason").set(reasonString);
+            rootNode.node(ipString).set(node);
+            loader.save(rootNode);
+        } catch (ConfigurateException e) {
+            logger.warn("Failed to add ip " + ipString + " to the ban list file.");
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void removeBannedIpFromStorage(@NotNull String ipString) {
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(ipBansDataFile).build();
+        try {
+            BasicConfigurationNode root = loader.load();
+            root.removeChild(ipString);
+            loader.save(root);
+        } catch (ConfigurateException e) {
+            logger.warn("Failed to remove UUID " + ipString + " to the ban list file.");
             e.printStackTrace();
         }
     }

@@ -22,7 +22,7 @@ public class SQLiteStorageIO implements StorageIO {
 
     @Override
     public void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details) {
-        String path = details.path();
+        String path = details.playerBanPath();
         if(!path.endsWith(".db")) {
             path += ".db";
         }
@@ -46,7 +46,7 @@ public class SQLiteStorageIO implements StorageIO {
     }
 
     @Override
-    public Map<UUID, BanDetails> loadAllBansFromStorage() {
+    public Map<UUID, BanDetails> loadPlayerBansFromStorage() {
         HashMap<UUID, BanDetails> map = new HashMap<>();
         try {
             Connection connection = DriverManager.getConnection(sqLitePath);
@@ -67,6 +67,12 @@ public class SQLiteStorageIO implements StorageIO {
             e.printStackTrace();
         }
         return map;
+    }
+
+
+    @Override
+    public Map<String, String> loadIpBansFromStorage() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -103,5 +109,15 @@ public class SQLiteStorageIO implements StorageIO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void saveBannedIpToStorage(@NotNull String ipString, @NotNull String reasonString) {
+
+    }
+
+    @Override
+    public void removeBannedIpFromStorage(@NotNull String ipString) {
+
     }
 }

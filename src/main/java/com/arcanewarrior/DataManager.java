@@ -6,15 +6,20 @@ import net.minestom.server.entity.Player;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class DataManager {
 
     private final Map<UUID, BanDetails> banList = new HashMap<>();
-    private final Set<InetSocketAddress> ipBanList = new HashSet<>();
+    // Format is key - string form of ip address, value - ban reason
+    private final Map<String, String> ipBanList = new HashMap<>();
 
     public DataManager(StorageIO storage) {
-        banList.putAll(storage.loadAllBansFromStorage());
+        banList.putAll(storage.loadPlayerBansFromStorage());
+        ipBanList.putAll(storage.loadIpBansFromStorage());
     }
 
     public boolean isIDBanned(UUID id) {
@@ -23,8 +28,7 @@ public class DataManager {
 
     public boolean isIPBanned(SocketAddress address) {
         if(address instanceof InetSocketAddress inetAddress) {
-            // Equals also compares port number, and we just want to compare hostname/InetAddress
-            //return ipBanList.contains(inetAddress);
+            return ipBanList.containsKey(formatIpAddress(inetAddress));
         }
         return false;
     }
@@ -35,6 +39,13 @@ public class DataManager {
         } else {
             return null;
         }
+    }
+
+    public String getIpBanReason(SocketAddress address) {
+        if(address instanceof InetSocketAddress inetAddress) {
+            return ipBanList.get(formatIpAddress(inetAddress));
+        }
+        return "";
     }
 
     public BanDetails addBannedPlayer(Player player, String reason) {
@@ -62,10 +73,22 @@ public class DataManager {
         return null;
     }
 
-    public void addBannedIP(SocketAddress address) {
+    public String addBannedIP(SocketAddress address, String reason) {
         if(address instanceof InetSocketAddress inetAddress && !isIPBanned(inetAddress)) {
-            ipBanList.add(inetAddress);
+            ipBanList.put(formatIpAddress(inetAddress), reason);
+            return formatIpAddress(inetAddress);
         }
+        return null;
+    }
+
+    public String removeBannedIP(String address) {
+        if(ipBanList.containsKey(address)) {
+            ipBanList.remove(address);
+            return address;
+        } else {
+            return null;
+        }
+
     }
 
     public List<String> getBannedUsernames() {
@@ -73,6 +96,19 @@ public class DataManager {
     }
 
     public List<String> getBannedIps() {
-        return ipBanList.stream().map(Object::toString).toList();
+        return ipBanList.keySet().stream().toList();
+    }
+
+    /**
+     * Formats the InetSocketAddress into a comparable and storable string
+     * @param address The address to convert
+     * @return The formatted string
+     */
+    private String formatIpAddress(InetSocketAddress address) {
+        String ipAddress = address.getAddress().toString();
+        if(ipAddress.startsWith("/")) {
+            ipAddress = ipAddress.substring(1);
+        }
+        return ipAddress;
     }
 }

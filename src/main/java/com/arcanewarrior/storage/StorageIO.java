@@ -20,10 +20,16 @@ public interface StorageIO {
      */
     void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details);
     /**
-     * Called when extension loads, caches all ban details from storage into the extension itself
+     * Called when the extension loads, caches all player ban details from storage into the extension itself
      * @return A Map that contains the UUIDs of banned players mapped with the BanDetails record class
      */
-    Map<UUID, BanDetails> loadAllBansFromStorage();
+    Map<UUID, BanDetails> loadPlayerBansFromStorage();
+
+    /**
+     * Called when the extension loads, caches all ip ban details from the storage into the extension itself
+     * @return A Map that contains a string form of an ip address mapped to a string ban reason
+     */
+    Map<String, String> loadIpBansFromStorage();
 
     /**
      * Saves a banned player to storage
@@ -36,4 +42,17 @@ public interface StorageIO {
      * @param id The UUID of the banned player
      */
     void removeBannedPlayerFromStorage(@NotNull UUID id);
+
+    /**
+     * Saves a banned ip to storage
+     * @param ipString The string representation of the ip address
+     * @param reasonString The ban reason string
+     */
+    void saveBannedIpToStorage(@NotNull String ipString, @NotNull String reasonString);
+
+    /**
+     * Removes a banned ip from storage
+     * @param ipString The string representation of the ip address
+     */
+    void removeBannedIpFromStorage(@NotNull String ipString);
 }

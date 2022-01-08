@@ -37,7 +37,7 @@ public class MongoDBIO implements StorageIO {
     }
 
     @Override
-    public Map<UUID, BanDetails> loadAllBansFromStorage() {
+    public Map<UUID, BanDetails> loadPlayerBansFromStorage() {
         HashMap<UUID, BanDetails> detailsMap = new HashMap<>();
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
@@ -52,6 +52,12 @@ public class MongoDBIO implements StorageIO {
         }
         mongoClient.close();
         return detailsMap;
+    }
+
+
+    @Override
+    public Map<String, String> loadIpBansFromStorage() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -75,6 +81,16 @@ public class MongoDBIO implements StorageIO {
             me.printStackTrace();
         }
         mongoClient.close();
+    }
+
+    @Override
+    public void saveBannedIpToStorage(@NotNull String ipString, @NotNull String reasonString) {
+
+    }
+
+    @Override
+    public void removeBannedIpFromStorage(@NotNull String ipString) {
+
     }
 
     private MongoClient createClient() {

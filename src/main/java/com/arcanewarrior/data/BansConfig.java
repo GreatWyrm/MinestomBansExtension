@@ -78,7 +78,7 @@ public class BansConfig {
             } else {
                 databaseType = typeNode.getString("local");
             }
-            CommentedConfigurationNode pathNode = databaseNode.node("path");
+            CommentedConfigurationNode pathNode = databaseNode.node("ban-playerBanPath");
             String databasePath = "";
             if(pathNode.empty()) {
                 logger.warn("Path field does not exist or is empty! Fixing config and using local storage.");
@@ -86,6 +86,15 @@ public class BansConfig {
                 saveAndUseDefault = true;
             } else {
                 databasePath = pathNode.getString("bans");
+            }
+            CommentedConfigurationNode ipPathNode = databaseNode.node("ip-ban-playerBanPath");
+            String databaseIpPath = "";
+            if(ipPathNode.empty()) {
+                logger.warn("IP Path field does not exist or is empty! Fixing config and using local storage.");
+                ipPathNode.set("ip-bans");
+                saveAndUseDefault = true;
+            } else {
+                databaseIpPath = ipPathNode.getString("bans");
             }
             String connectionString = "";
             if(databaseNode.hasChild("connection-string")) {
@@ -97,7 +106,7 @@ public class BansConfig {
                 connectionStringNode.commentIfAbsent("Used to connect to a MongoDB database, must be fully qualified");
                 saveAndUseDefault = true;
             }
-            databaseDetails = new DatabaseDetails(databasePath, connectionString);
+            databaseDetails = new DatabaseDetails(databasePath, databaseIpPath, connectionString);
             if(saveAndUseDefault) {
                 loader.save(root);
                 databaseDetails = createDefaultDetails();
@@ -160,6 +169,6 @@ public class BansConfig {
     }
 
     private DatabaseDetails createDefaultDetails() {
-        return new DatabaseDetails("bans", "");
+        return new DatabaseDetails("bans", "ip-bans", "");
     }
 }

@@ -1,6 +1,7 @@
 database:
     type: "local"
-    path: "bans"
+    ban-path: "bans"
+    ip-ban-path: "ip-bans"
     # Used to connect to a MongoDB database, must be fully qualified
     connection-string: ''
 
