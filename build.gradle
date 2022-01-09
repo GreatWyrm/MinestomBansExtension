@@ -15,8 +15,8 @@ repositories {
 dependencies {
     compileOnly 'com.github.Minestom:Minestom:83ab75d1bf'
     // https://github.com/SpongePowered/configurate
-    compileOnly 'org.spongepowered:configurate-gson:4.0.0'
-    compileOnly 'org.spongepowered:configurate-yaml:4.0.0'
+    compileOnly 'org.spongepowered:configurate-gson:4.1.2'
+    compileOnly 'org.spongepowered:configurate-yaml:4.1.2'
     compileOnly 'org.xerial:sqlite-jdbc:3.36.0.3'
     compileOnly 'org.mongodb:mongodb-driver-sync:4.4.0'
 }

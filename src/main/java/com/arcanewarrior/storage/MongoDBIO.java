@@ -29,10 +29,10 @@ public class MongoDBIO implements StorageIO {
 
     @Override
     public void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details) {
-        // Connection String - create from username, password, and databaseName
         mongoConnectionString = new ConnectionString(details.connectionString());
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
+        // Get collections to ensure they exist
         var collection = database.getCollection(playerCollectionName);
         var ipCollection = database.getCollection(ipCollectionName);
         mongoClient.close();
