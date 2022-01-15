@@ -18,13 +18,14 @@ public class KickCommand extends BaseCommand {
         setDefaultExecutor((sender, context) -> sender.sendMessage("Usage: /kick [player] [reason]"));
 
         ArgumentEntity players = ArgumentType.Entity("player").onlyPlayers(true);
-        Argument<String> reason = ArgumentType.String("reason").setDefaultValue("Kicked from the Server!");
+        Argument<String[]> reason = ArgumentType.StringArray("reason").setDefaultValue(new String[]{"Kicked from the server"});
 
         addSyntax((sender, context) -> {
+            String kickReason = String.join(" ", context.get(reason));
             for(Entity entity : context.get(players).find(sender)) {
                 // Should only be players, but hey, cast just to be safe
                 if(entity instanceof Player player) {
-                    player.kick(Component.text(context.get(reason), NamedTextColor.RED));
+                    player.kick(Component.text(kickReason, NamedTextColor.RED));
                 }
             }
         }, players, reason);
