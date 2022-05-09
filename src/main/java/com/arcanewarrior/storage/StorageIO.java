@@ -1,6 +1,6 @@
 package com.arcanewarrior.storage;
 
-import com.arcanewarrior.data.BanDetails;
+import com.arcanewarrior.data.BanRecord;
 import com.arcanewarrior.data.DatabaseDetails;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,39 +20,38 @@ public interface StorageIO {
      */
     void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details);
     /**
-     * Called when the extension loads, caches all player ban details from storage into the extension itself
-     * @return A Map that contains the UUIDs of banned players mapped with the BanDetails record class
+     * Called when the extension loads, caches all permanent ban details from storage into the extension itself
+     * @return A Map that contains the UUIDs of banned players mapped with the PermanentBanRecord or TemporaryBanRecord class
      */
-    Map<UUID, BanDetails> loadPlayerBansFromStorage();
-
+    Map<UUID, BanRecord> loadBans();
     /**
      * Called when the extension loads, caches all ip ban details from the storage into the extension itself
      * @return A Map that contains a string form of an ip address mapped to a string ban reason
      */
-    Map<String, String> loadIpBansFromStorage();
+    Map<String, String> loadIpBans();
 
     /**
-     * Saves a banned player to storage
-     * @param banDetails All relevant details about the ban
+     * Adds a permanent ban to storage
+     * @param banRecord The details of the ban
      */
-    void saveBannedPlayerToStorage(@NotNull BanDetails banDetails);
+    void saveBan(@NotNull BanRecord banRecord);
 
     /**
-     * Removes a banned player from storage
-     * @param id The UUID of the banned player
+     * Removes a temporary or permanent ban for this player
+      * @param id The uuid of the banned player
      */
-    void removeBannedPlayerFromStorage(@NotNull UUID id);
+    void removeBan(@NotNull UUID id);
 
     /**
      * Saves a banned ip to storage
      * @param ipString The string representation of the ip address
      * @param reasonString The ban reason string
      */
-    void saveBannedIpToStorage(@NotNull String ipString, @NotNull String reasonString);
+    void saveBannedIp(@NotNull String ipString, @NotNull String reasonString);
 
     /**
      * Removes a banned ip from storage
      * @param ipString The string representation of the ip address
      */
-    void removeBannedIpFromStorage(@NotNull String ipString);
+    void removeBannedIp(@NotNull String ipString);
 }

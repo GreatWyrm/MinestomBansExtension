@@ -1,7 +1,7 @@
 package com.arcanewarrior.storage;
 
 import com.arcanewarrior.UUIDUtils;
-import com.arcanewarrior.data.BanDetails;
+import com.arcanewarrior.data.BanRecord;
 import com.arcanewarrior.data.DatabaseDetails;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoException;
@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+// Currently does not function properly, needs updating to handle the new data of bans
+@Deprecated
 public class MongoDBIO implements StorageIO {
 
     private ConnectionString mongoConnectionString;
@@ -39,15 +41,15 @@ public class MongoDBIO implements StorageIO {
     }
 
     @Override
-    public Map<UUID, BanDetails> loadPlayerBansFromStorage() {
-        HashMap<UUID, BanDetails> detailsMap = new HashMap<>();
+    public Map<UUID, BanRecord> loadBans() {
+        HashMap<UUID, BanRecord> detailsMap = new HashMap<>();
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         var collection = database.getCollection(playerCollectionName);
         Bson projectionFields = Projections.fields(Projections.excludeId());
         for (Document next : collection.find()
                 .projection(projectionFields)) {
-            BanDetails details = convertPlayerBanFromDocument(next);
+            BanRecord details = convertPlayerBanFromDocument(next);
             if (details != null) {
                 detailsMap.put(details.uuid(), details);
             }
@@ -58,7 +60,7 @@ public class MongoDBIO implements StorageIO {
 
 
     @Override
-    public Map<String, String> loadIpBansFromStorage() {
+    public Map<String, String> loadIpBans() {
         HashMap<String, String> detailsMap = new HashMap<>();
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
@@ -76,16 +78,16 @@ public class MongoDBIO implements StorageIO {
     }
 
     @Override
-    public void saveBannedPlayerToStorage(@NotNull BanDetails banDetails) {
+    public void saveBan(@NotNull BanRecord banRecord) {
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         var collection = database.getCollection(playerCollectionName);
-        collection.insertOne(convertPlayerBanToDocument(banDetails));
+        collection.insertOne(convertPlayerBanToDocument(banRecord));
         mongoClient.close();
     }
 
     @Override
-    public void removeBannedPlayerFromStorage(@NotNull UUID id) {
+    public void removeBan(@NotNull UUID id) {
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         var collection = database.getCollection(playerCollectionName);
@@ -99,7 +101,7 @@ public class MongoDBIO implements StorageIO {
     }
 
     @Override
-    public void saveBannedIpToStorage(@NotNull String ipString, @NotNull String reasonString) {
+    public void saveBannedIp(@NotNull String ipString, @NotNull String reasonString) {
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         var collection = database.getCollection(ipCollectionName);
@@ -108,7 +110,7 @@ public class MongoDBIO implements StorageIO {
     }
 
     @Override
-    public void removeBannedIpFromStorage(@NotNull String ipString) {
+    public void removeBannedIp(@NotNull String ipString) {
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         var collection = database.getCollection(ipCollectionName);
@@ -131,23 +133,25 @@ public class MongoDBIO implements StorageIO {
     private final String reasonFieldName = "reason";
     private final String ipFieldName = "ip";
 
-    private Document convertPlayerBanToDocument(BanDetails details) {
-        return new Document(
+    private Document convertPlayerBanToDocument(BanRecord details) {
+        /*return new Document(
                 uuidFieldName, UUIDUtils.stripDashesFromUUID(details.uuid())
         ).append(
                 usernameFieldName, details.bannedUsername()
         ).append(
                 reasonFieldName, details.banReason()
-        );
+        );*/
+        return null;
     }
 
-    private BanDetails convertPlayerBanFromDocument(Document document) {
+    private BanRecord convertPlayerBanFromDocument(Document document) {
         if(document.containsKey(uuidFieldName)) {
-            return new BanDetails(
+            /*return new BanDetails(
                     UUIDUtils.makeUUIDFromStringWithoutDashes(document.getString(uuidFieldName)),
                     document.getString(usernameFieldName),
                     document.getString(reasonFieldName)
-            );
+            );*/
+            return null;
         } else {
             return null;
         }

@@ -1,29 +1,30 @@
 package com.arcanewarrior;
 
-import com.arcanewarrior.data.BanDetails;
+import com.arcanewarrior.data.BanRecord;
+import com.arcanewarrior.data.PermanentBanRecord;
+import com.arcanewarrior.data.TemporaryBanRecord;
 import com.arcanewarrior.storage.StorageIO;
-import net.minestom.server.entity.Player;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.time.temporal.TemporalAmount;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class DataManager {
-
-    private final Map<UUID, BanDetails> banList = new HashMap<>();
+    private final Map<UUID, BanRecord> uuidBanList = new HashMap<>();
     // Format is key - string form of ip address, value - ban reason
     private final Map<String, String> ipBanList = new HashMap<>();
 
     public DataManager(StorageIO storage) {
-        banList.putAll(storage.loadPlayerBansFromStorage());
-        ipBanList.putAll(storage.loadIpBansFromStorage());
+        uuidBanList.putAll(storage.loadBans());
+        ipBanList.putAll(storage.loadIpBans());
     }
 
-    public boolean isIDBanned(UUID id) {
-        return banList.containsKey(id);
+    public boolean isUUIDBanned(UUID id) {
+        return uuidBanList.containsKey(id) && uuidBanList.get(id).isPlayerBanned();
     }
 
     public boolean isIPBanned(SocketAddress address) {
@@ -34,29 +35,32 @@ public class DataManager {
     }
 
     public String getBanReason(UUID id) {
-        if(isIDBanned(id)) {
-            return banList.get(id).banReason();
-        } else {
-            return null;
+        if(uuidBanList.containsKey(id)) {
+            return uuidBanList.get(id).username();
         }
+        return null;
     }
 
     public String getIpBanReason(SocketAddress address) {
         if(address instanceof InetSocketAddress inetAddress) {
             return ipBanList.get(formatIpAddress(inetAddress));
         }
-        return "";
+        return null;
     }
 
-    public BanDetails addBannedPlayer(Player player, String reason) {
-        return addBannedPlayer(player.getUuid(), player.getUsername(), reason);
+    public PermanentBanRecord addPermanentPlayerBan(UUID id, String username, String reason, String executor) {
+        if(!uuidBanList.containsKey(id)) {
+            PermanentBanRecord banRecord = new PermanentBanRecord(id, username, reason, executor);
+            uuidBanList.put(id, banRecord);
+            return banRecord;
+        }
+        return null;
     }
-
-    public BanDetails addBannedPlayer(UUID id, String username, String reason) {
-        if(!isIDBanned(id)) {
-            BanDetails details = new BanDetails(id, username, reason);
-            banList.put(id, details);
-            return details;
+    public TemporaryBanRecord addTemporaryPlayerBan(UUID id, String username, String reason, String executor, TemporalAmount duration) {
+        if(!uuidBanList.containsKey(id)) {
+            TemporaryBanRecord banRecord = new TemporaryBanRecord(id, username, reason, executor, duration);
+            uuidBanList.put(id, banRecord);
+            return banRecord;
         }
         return null;
     }
@@ -64,9 +68,9 @@ public class DataManager {
     public UUID removeBannedPlayer(String username) {
         // TODO: This could be async because we're doing a O(n) search and not interacting with API, but it probably doesn't really matter that much
         // Or - create a map of UUID to username, and update that instead when removing a banned player
-        for(var entry : banList.entrySet()) {
-            if(entry.getValue().bannedUsername().equals(username)) {
-                banList.remove(entry.getKey());
+        for(var entry : uuidBanList.entrySet()) {
+            if(entry.getValue().username().equals(username)) {
+                uuidBanList.remove(entry.getKey());
                 return entry.getKey();
             }
         }
@@ -88,11 +92,10 @@ public class DataManager {
         } else {
             return null;
         }
-
     }
 
     public List<String> getBannedUsernames() {
-        return banList.values().stream().map(BanDetails::bannedUsername).toList();
+        return uuidBanList.values().stream().map(BanRecord::username).toList();
     }
 
     public List<String> getBannedIps() {

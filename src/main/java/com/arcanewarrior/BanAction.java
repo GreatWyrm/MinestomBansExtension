@@ -1,10 +1,12 @@
 package com.arcanewarrior;
 
-import com.arcanewarrior.data.BanDetails;
+import com.arcanewarrior.data.PermanentBanRecord;
+import com.arcanewarrior.data.TemporaryBanRecord;
 import com.arcanewarrior.storage.StorageIO;
 import net.minestom.server.entity.Player;
 
 import java.net.SocketAddress;
+import java.time.temporal.TemporalAmount;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,38 +20,48 @@ public class BanAction {
         this.dataManager = dataManager;
     }
 
-    public void addBannedPlayer(Player player, String reason) {
-        BanDetails details = dataManager.addBannedPlayer(player, reason);
-        if(details != null) {
-            storageIO.saveBannedPlayerToStorage(details);
+    public boolean permanentBanPlayer(Player player, String reason, String banExecutor) {
+        return permanentBanPlayer(player.getUuid(), player.getUsername(), reason, banExecutor);
+    }
+    public boolean permanentBanPlayer(UUID id, String username, String reason, String banExecutor) {
+        PermanentBanRecord record = dataManager.addPermanentPlayerBan(id, username, reason, banExecutor);
+        if(record != null) {
+            storageIO.saveBan(record);
+            return true;
         }
+        return false;
+    }
+    public boolean temporaryBanPlayer(Player player, String reason, String banExecutor, TemporalAmount duration) {
+        return temporaryBanPlayer(player.getUuid(), player.getUsername(), reason, banExecutor, duration);
     }
 
-    public void addBannedPlayer(UUID id, String username, String reason) {
-        BanDetails details = dataManager.addBannedPlayer(id, username, reason);
-        if(details != null) {
-            storageIO.saveBannedPlayerToStorage(details);
+    public boolean temporaryBanPlayer(UUID id, String username, String reason, String banExecutor, TemporalAmount duration) {
+        TemporaryBanRecord record = dataManager.addTemporaryPlayerBan(id, username, reason, banExecutor, duration);
+        if(record != null) {
+            storageIO.saveBan(record);
+            return true;
         }
+        return false;
     }
 
     public void unbanPlayer(String username) {
         UUID id = dataManager.removeBannedPlayer(username);
         if(id != null) {
-            storageIO.removeBannedPlayerFromStorage(id);
+            storageIO.removeBan(id);
         }
     }
 
     public void addBannedIP(SocketAddress address, String reason) {
         String ipStringAddress = dataManager.addBannedIP(address, reason);
         if(ipStringAddress != null) {
-            storageIO.saveBannedIpToStorage(ipStringAddress, reason);
+            storageIO.saveBannedIp(ipStringAddress, reason);
         }
     }
 
     public void unbanIpAddress(String address) {
         String ipAddress = dataManager.removeBannedIP(address);
         if(ipAddress != null) {
-            storageIO.removeBannedIpFromStorage(address);
+            storageIO.removeBannedIp(address);
         }
     }
 

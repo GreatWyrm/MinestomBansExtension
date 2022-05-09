@@ -1,7 +1,7 @@
 package com.arcanewarrior.storage;
 
 import com.arcanewarrior.UUIDUtils;
-import com.arcanewarrior.data.BanDetails;
+import com.arcanewarrior.data.BanRecord;
 import com.arcanewarrior.data.DatabaseDetails;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+// Currently does not function properly, needs updating to handle the new data of bans
+@Deprecated
 public class SQLiteStorageIO implements StorageIO {
 
     private String sqLitePath;
@@ -52,8 +54,8 @@ public class SQLiteStorageIO implements StorageIO {
     }
 
     @Override
-    public Map<UUID, BanDetails> loadPlayerBansFromStorage() {
-        HashMap<UUID, BanDetails> map = new HashMap<>();
+    public Map<UUID, BanRecord> loadBans() {
+        HashMap<UUID, BanRecord> map = new HashMap<>();
         try {
             Connection connection = DriverManager.getConnection(sqLitePath);
             String query = "SELECT * FROM " + TABLE_NAME + ";";
@@ -64,7 +66,7 @@ public class SQLiteStorageIO implements StorageIO {
                 String username = rs.getString(usernameFieldName);
                 String banReason = rs.getString(banReasonFieldName);
                 UUID uuid = UUIDUtils.makeUUIDFromStringWithoutDashes(id);
-                map.put(uuid, new BanDetails(uuid, username, banReason));
+                //map.put(uuid, new BanRecord(uuid, username, banReason));
             }
             rs.close();
             statement.close();
@@ -77,7 +79,7 @@ public class SQLiteStorageIO implements StorageIO {
 
 
     @Override
-    public Map<String, String> loadIpBansFromStorage() {
+    public Map<String, String> loadIpBans() {
         HashMap<String, String> map = new HashMap<>();
         try {
             Connection connection = DriverManager.getConnection(sqLitePath);
@@ -99,8 +101,8 @@ public class SQLiteStorageIO implements StorageIO {
     }
 
     @Override
-    public void saveBannedPlayerToStorage(@NotNull BanDetails details) {
-        String reason = details.banReason();
+    public void saveBan(@NotNull BanRecord details) {
+        String reason = " ";
         if(reason.length() > banReasonMaxLength) {
             reason = reason.substring(0, banReasonMaxLength);
         }
@@ -109,7 +111,7 @@ public class SQLiteStorageIO implements StorageIO {
             String queryPrepared = "INSERT INTO " + TABLE_NAME + " (" + uuidFieldName + ", " + usernameFieldName + ", " + banReasonFieldName + ") VALUES (?,?,?)";
             PreparedStatement statement = connection.prepareStatement(queryPrepared);
             statement.setString(1, UUIDUtils.stripDashesFromUUID(details.uuid())); // Statements start from 1 >:(
-            statement.setString(2, details.bannedUsername());
+            statement.setString(2, details.username());
             statement.setString(3, reason);
             statement.executeUpdate();
             statement.close();
@@ -120,7 +122,7 @@ public class SQLiteStorageIO implements StorageIO {
     }
 
     @Override
-    public void removeBannedPlayerFromStorage(@NotNull UUID id) {
+    public void removeBan(@NotNull UUID id) {
         try {
             Connection connection = DriverManager.getConnection(sqLitePath);
             String query = "DELETE from " + TABLE_NAME + " where " + uuidFieldName + "=?;";
@@ -135,7 +137,7 @@ public class SQLiteStorageIO implements StorageIO {
     }
 
     @Override
-    public void saveBannedIpToStorage(@NotNull String ipString, @NotNull String reasonString) {
+    public void saveBannedIp(@NotNull String ipString, @NotNull String reasonString) {
         if(reasonString.length() > banReasonMaxLength) {
             reasonString = reasonString.substring(0, banReasonMaxLength);
         }
@@ -154,7 +156,7 @@ public class SQLiteStorageIO implements StorageIO {
     }
 
     @Override
-    public void removeBannedIpFromStorage(@NotNull String ipString) {
+    public void removeBannedIp(@NotNull String ipString) {
         try {
             Connection connection = DriverManager.getConnection(sqLitePath);
             String query = "DELETE from " + IP_TABLE_NAME + " where " + ipString + "=?;";

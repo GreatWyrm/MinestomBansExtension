@@ -33,7 +33,7 @@ public class EventsHandler {
         }
         @Override
         public @NotNull Result run(@NotNull AsyncPlayerPreLoginEvent event) {
-            if(dataManager.isIDBanned(event.getPlayerUuid())) {
+            if(dataManager.isUUIDBanned(event.getPlayerUuid())) {
                 event.getPlayer().kick(Component.text("You have been banned from this server.\n" + dataManager.getBanReason(event.getPlayerUuid()), NamedTextColor.RED));
             }
             if(dataManager.isIPBanned(event.getPlayer().getPlayerConnection().getRemoteAddress())) {

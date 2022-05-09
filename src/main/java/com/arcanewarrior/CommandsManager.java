@@ -23,6 +23,7 @@ public class CommandsManager {
 
         commands.add(new KickCommand(permissionMap.get(Permissions.KICK)));
         commands.add(new BanCommand(permissionMap.get(Permissions.BAN), banAction));
+        commands.add(new TempBanCommand(permissionMap.get(Permissions.TEMPBAN), banAction));
         commands.add(new UnbanCommand(permissionMap.get(Permissions.UNBAN), banAction));
         commands.add(new BanIPCommand(permissionMap.get(Permissions.BAN_IP), banAction));
         commands.add(new UnbanIPCommand(permissionMap.get(Permissions.UNBAN_IP), banAction));

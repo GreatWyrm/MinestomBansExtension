@@ -1,7 +1,9 @@
 package com.arcanewarrior.storage;
 
-import com.arcanewarrior.data.BanDetails;
+import com.arcanewarrior.data.BanRecord;
 import com.arcanewarrior.data.DatabaseDetails;
+import com.arcanewarrior.data.PermanentBanRecord;
+import com.arcanewarrior.data.TemporaryBanRecord;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,8 @@ import org.spongepowered.configurate.gson.GsonConfigurationLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -19,9 +23,8 @@ import java.util.UUID;
 public class LocalStorageIO implements StorageIO {
 
     private final Logger logger = LoggerFactory.getLogger(LocalStorageIO.class);
-
-    private Path playerBansDataFile;
-    private Path ipBansDataFile;
+    private Path uuidBansPath;
+    private Path ipBansPath;
 
     @Override
     public void initializeIfEmpty(@NotNull Path rootExtensionFolder, DatabaseDetails details) {
@@ -29,25 +32,25 @@ public class LocalStorageIO implements StorageIO {
         if(!playerPath.endsWith(".json")) {
             playerPath += ".json";
         }
-        playerBansDataFile = rootExtensionFolder.resolve(playerPath);
+        uuidBansPath = rootExtensionFolder.resolve(playerPath);
         String ipPath = details.ipBanPath();
         if(!ipPath.endsWith(".json")) {
             ipPath += ".json";
         }
-        ipBansDataFile = rootExtensionFolder.resolve(ipPath);
-        if(!Files.exists(playerBansDataFile)) {
-            logger.info("Player Ban list file not found! Creating...");
+        ipBansPath = rootExtensionFolder.resolve(ipPath);
+        if(!Files.exists(uuidBansPath)) {
+            logger.info("UUID Ban list file not found! Creating...");
             try {
-                Files.createFile(playerBansDataFile);
+                Files.createFile(uuidBansPath);
             } catch (IOException e) {
-                logger.info("Failed to create player banlist file!");
+                logger.info("Failed to create uuid banlist file!");
                 e.printStackTrace();
             }
         }
-        if(!Files.exists(ipBansDataFile)) {
+        if(!Files.exists(ipBansPath)) {
             logger.info("IP Ban list file not found! Creating...");
             try {
-                Files.createFile(ipBansDataFile);
+                Files.createFile(ipBansPath);
             } catch (IOException e) {
                 logger.info("Failed to create ip banlist file!");
                 e.printStackTrace();
@@ -56,9 +59,9 @@ public class LocalStorageIO implements StorageIO {
     }
 
     @Override
-    public Map<UUID, BanDetails> loadPlayerBansFromStorage() {
-        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(playerBansDataFile).build();
-        HashMap<UUID, BanDetails> list = new HashMap<>();
+    public Map<UUID, BanRecord> loadBans() {
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(uuidBansPath).build();
+        HashMap<UUID, BanRecord> list = new HashMap<>();
         boolean shouldSave = false;
         try {
             BasicConfigurationNode root = loader.load();
@@ -66,10 +69,44 @@ public class LocalStorageIO implements StorageIO {
                 try {
                     UUID id = UUID.fromString(entry.getKey().toString());
                     BasicConfigurationNode node = entry.getValue();
-                    String reason = node.node("reason").getString();
-                    String username = node.node("username").getString();
-                    BanDetails details = new BanDetails(id, username, reason);
-                    list.put(id, details);
+                    System.out.println(node.toString());
+                    if(node.hasChild("expiryTime")) {
+                        // Working with temp ban, load accordingly
+                        String banTimeString = node.node("banTime").getString();
+                        ZonedDateTime banTime = ZonedDateTime.now();
+                        if(banTimeString != null) {
+                            banTime = ZonedDateTime.parse(banTimeString, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+                        }
+                        String expireTimeString = node.node("expiryTime").getString();
+                        ZonedDateTime expireTime = ZonedDateTime.now();
+                        if(expireTimeString != null) {
+                            expireTime = ZonedDateTime.parse(expireTimeString, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+                        }
+                        TemporaryBanRecord record = new TemporaryBanRecord(
+                            id, node.node("username").getString("Unknown"),
+                                node.node("banReason").getString("The Ban Hammer has spoken!"),
+                                node.node("banExecutor").getString("Unknown"),
+                                banTime,
+                                expireTime
+                        );
+                        // Quick check to not load expired bans
+                        if(record.isPlayerBanned()) {
+                            list.put(id, record);
+                        }
+                    } else {
+                        String banTimeString = node.node("banTime").getString();
+                        ZonedDateTime banTime = ZonedDateTime.now();
+                        if(banTimeString != null) {
+                            banTime = ZonedDateTime.parse(banTimeString, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+                        }
+                        PermanentBanRecord record = new PermanentBanRecord(
+                                id, node.node("username").getString("Unknown"),
+                                node.node("banReason").getString("The Ban Hammer has spoken!"),
+                                node.node("banExecutor").getString("Unknown"),
+                                banTime
+                        );
+                        list.put(id, record);
+                    }
                 } catch (IllegalArgumentException e) {
                     shouldSave = true;
                     root.removeChild(entry.getKey());
@@ -87,8 +124,8 @@ public class LocalStorageIO implements StorageIO {
     }
 
     @Override
-    public Map<String, String> loadIpBansFromStorage() {
-        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(ipBansDataFile).build();
+    public Map<String, String> loadIpBans() {
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(ipBansPath).build();
         HashMap<String, String> list = new HashMap<>();
         try {
             BasicConfigurationNode root = loader.load();
@@ -106,25 +143,31 @@ public class LocalStorageIO implements StorageIO {
     }
 
     @Override
-    public void saveBannedPlayerToStorage(@NotNull BanDetails details) {
-        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(playerBansDataFile).build();
+    public void saveBan(@NotNull BanRecord banRecord) {
+        // Don't save ban if it's not an actual ban
+        if(!banRecord.isPlayerBanned()) {
+            return;
+        }
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(uuidBansPath).build();
         try {
             BasicConfigurationNode rootNode = loader.load();
             BasicConfigurationNode node = loader.createNode();
-            node.node("reason").set(details.banReason());
-            node.node("username").set(details.bannedUsername());
-            rootNode.node(details.uuid().toString()).set(node);
+            var propertiesMap = banRecord.toPropertiesMap();
+            for(String key : propertiesMap.keySet()) {
+                node.node(key).set(propertiesMap.get(key));
+            }
+            rootNode.node(banRecord.uuid().toString()).set(node);
             loader.save(rootNode);
 
         } catch (ConfigurateException e) {
-            logger.warn("Failed to add player " + details.bannedUsername() + " to the ban list file.");
+            logger.warn("Failed to add player " + banRecord.username() + " to the ban list file.");
             e.printStackTrace();
         }
     }
 
     @Override
-    public void removeBannedPlayerFromStorage(@NotNull UUID id) {
-        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(playerBansDataFile).build();
+    public void removeBan(@NotNull UUID id) {
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(uuidBansPath).build();
         try {
             BasicConfigurationNode root = loader.load();
             root.removeChild(id.toString());
@@ -136,8 +179,8 @@ public class LocalStorageIO implements StorageIO {
     }
 
     @Override
-    public void saveBannedIpToStorage(@NotNull String ipString, @NotNull String reasonString) {
-        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(ipBansDataFile).build();
+    public void saveBannedIp(@NotNull String ipString, @NotNull String reasonString) {
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(ipBansPath).build();
         try {
             BasicConfigurationNode rootNode = loader.load();
             BasicConfigurationNode node = loader.createNode();
@@ -151,8 +194,8 @@ public class LocalStorageIO implements StorageIO {
     }
 
     @Override
-    public void removeBannedIpFromStorage(@NotNull String ipString) {
-        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(ipBansDataFile).build();
+    public void removeBannedIp(@NotNull String ipString) {
+        GsonConfigurationLoader loader = GsonConfigurationLoader.builder().path(ipBansPath).build();
         try {
             BasicConfigurationNode root = loader.load();
             root.removeChild(ipString);

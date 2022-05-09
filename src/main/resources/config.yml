@@ -8,6 +8,7 @@ database:
 # All the names of the permissions
 ban-permission: "minestom.ban"
 unban-permission: "minestom.unban"
+tempban-permission: "minestom.tempban"
 kick-permission: "minestom.kick"
 ban-ip-permission: "minestom.ban-ip"
 unban-ip-permission: "minestom.unban-ip"

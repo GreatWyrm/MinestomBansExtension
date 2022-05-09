@@ -1,10 +1,10 @@
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '7.1.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 group 'com.arcanewarrior'
-version '0.2.1'
+version '0.3.0'
 
 repositories {
     mavenCentral()
@@ -13,12 +13,12 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.github.Minestom:Minestom:83ab75d1bf'
+    compileOnly 'com.github.Minestom:Minestom:37ba3c7893'
     // https://github.com/SpongePowered/configurate
     compileOnly 'org.spongepowered:configurate-gson:4.1.2'
     compileOnly 'org.spongepowered:configurate-yaml:4.1.2'
     compileOnly 'org.xerial:sqlite-jdbc:3.36.0.3'
-    compileOnly 'org.mongodb:mongodb-driver-sync:4.4.0'
+    compileOnly 'org.mongodb:mongodb-driver-sync:4.6.0'
 }
 
 shadowJar {

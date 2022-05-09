@@ -26,12 +26,21 @@ public class BanCommand extends BaseCommand {
             // Create ban reason by concatenating the string array with spaces
             String banReason = String.join(" ", context.get(reason));
             List<Entity> entityList =  context.get(players).find(sender);
+            String banExecutor;
+            if(sender instanceof Player player) {
+                banExecutor = player.getUsername();
+            } else {
+                banExecutor = "Console";
+            }
             if(entityList.size() > 0) {
                 for(Entity entity : entityList) {
                     // Should only be players, but hey, cast just to be safe
                     if(entity instanceof Player player) {
                         player.kick(Component.text(banReason, NamedTextColor.RED));
-                        banAction.addBannedPlayer(player, banReason);
+                        boolean success = banAction.permanentBanPlayer(player, banReason, banExecutor);
+                        if(!success) {
+                            sender.sendMessage(Component.text("Failed to ban " + player.getUsername() + ", most likely they are already banned.", NamedTextColor.RED));
+                        }
                     }
                 }
             } else {
@@ -40,7 +49,11 @@ public class BanCommand extends BaseCommand {
                 // Output is of format {"name":Player Username,"id":UUID of Player (without dashes)}
                 if(output != null) {
                     String uuid = output.get("id").getAsString();
-                    banAction.addBannedPlayer(UUIDUtils.makeUUIDFromStringWithoutDashes(uuid), output.get("name").getAsString(), banReason);
+                    String username = output.get("name").getAsString();
+                    boolean success = banAction.permanentBanPlayer(UUIDUtils.makeUUIDFromStringWithoutDashes(uuid), username, banReason, banExecutor);
+                    if(!success) {
+                        sender.sendMessage(Component.text("Failed to ban " + username + ", most likely they are already banned.", NamedTextColor.RED));
+                    }
                 } else {
                     sender.sendMessage("Error: Could not find offline player with name " + offlinePlayer);
                 }
