@@ -3,6 +3,8 @@ package com.arcanewarrior.storage;
 import com.arcanewarrior.UUIDUtils;
 import com.arcanewarrior.data.BanRecord;
 import com.arcanewarrior.data.DatabaseDetails;
+import com.arcanewarrior.data.PermanentBanRecord;
+import com.arcanewarrior.data.TemporaryBanRecord;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
@@ -15,18 +17,19 @@ import org.bson.conversions.Bson;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
-// Currently does not function properly, needs updating to handle the new data of bans
-@Deprecated
 public class MongoDBIO implements StorageIO {
 
     private ConnectionString mongoConnectionString;
 
     private final String databaseName = "bans";
-    private final String playerCollectionName = "banlist";
+    private final String bansCollectionName = "banlist";
     private final String ipCollectionName = "ipbanlist";
 
     @Override
@@ -35,7 +38,7 @@ public class MongoDBIO implements StorageIO {
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         // Get collections to ensure they exist
-        var collection = database.getCollection(playerCollectionName);
+        var collection = database.getCollection(bansCollectionName);
         var ipCollection = database.getCollection(ipCollectionName);
         mongoClient.close();
     }
@@ -45,7 +48,7 @@ public class MongoDBIO implements StorageIO {
         HashMap<UUID, BanRecord> detailsMap = new HashMap<>();
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
-        var collection = database.getCollection(playerCollectionName);
+        var collection = database.getCollection(bansCollectionName);
         Bson projectionFields = Projections.fields(Projections.excludeId());
         for (Document next : collection.find()
                 .projection(projectionFields)) {
@@ -81,7 +84,7 @@ public class MongoDBIO implements StorageIO {
     public void saveBan(@NotNull BanRecord banRecord) {
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
-        var collection = database.getCollection(playerCollectionName);
+        var collection = database.getCollection(bansCollectionName);
         collection.insertOne(convertPlayerBanToDocument(banRecord));
         mongoClient.close();
     }
@@ -90,7 +93,7 @@ public class MongoDBIO implements StorageIO {
     public void removeBan(@NotNull UUID id) {
         MongoClient mongoClient = createClient();
         MongoDatabase database = mongoClient.getDatabase(databaseName);
-        var collection = database.getCollection(playerCollectionName);
+        var collection = database.getCollection(bansCollectionName);
         Bson query = Filters.eq(uuidFieldName, UUIDUtils.stripDashesFromUUID(id));
         try {
             collection.deleteOne(query);
@@ -130,28 +133,46 @@ public class MongoDBIO implements StorageIO {
 
     private final String uuidFieldName = "uuid";
     private final String usernameFieldName = "username";
-    private final String reasonFieldName = "reason";
+    private final String reasonFieldName = "banReason";
+    private final String executorFieldName = "banExecutor";
+    private final String banTimeFieldName = "banTime";
+    private final String expiryTimeFieldName = "expiryTime";
     private final String ipFieldName = "ip";
 
     private Document convertPlayerBanToDocument(BanRecord details) {
-        /*return new Document(
-                uuidFieldName, UUIDUtils.stripDashesFromUUID(details.uuid())
-        ).append(
-                usernameFieldName, details.bannedUsername()
-        ).append(
-                reasonFieldName, details.banReason()
-        );*/
-        return null;
+        Document document = new Document();
+        for(var test : details.toPropertiesMap().entrySet()) {
+            document.append(test.getKey(), test.getValue());
+        }
+        return document;
     }
 
     private BanRecord convertPlayerBanFromDocument(Document document) {
         if(document.containsKey(uuidFieldName)) {
-            /*return new BanDetails(
-                    UUIDUtils.makeUUIDFromStringWithoutDashes(document.getString(uuidFieldName)),
-                    document.getString(usernameFieldName),
-                    document.getString(reasonFieldName)
-            );*/
-            return null;
+            UUID id = UUIDUtils.makeUUIDFromStringWithoutDashes(document.getString(uuidFieldName));
+            String username = document.containsKey(usernameFieldName) ? document.getString(usernameFieldName) : "Unknown";
+            String executor = document.containsKey(executorFieldName) ? document.getString(executorFieldName) : "Unknown";
+            String reason = document.containsKey(reasonFieldName) ? document.getString(reasonFieldName) : "The Ban Hammer has Spoken!";
+            ZonedDateTime banTime = document.containsKey(banTimeFieldName) ? ZonedDateTime.parse(document.getString(banTimeFieldName), DateTimeFormatter.ISO_ZONED_DATE_TIME) : ZonedDateTime.now();
+            if(document.containsKey(expiryTimeFieldName)) {
+                ZonedDateTime expireTime = document.containsKey(expiryTimeFieldName) ? ZonedDateTime.parse(document.getString(expiryTimeFieldName), DateTimeFormatter.ISO_ZONED_DATE_TIME) : ZonedDateTime.now();
+                return new TemporaryBanRecord(
+                        id,
+                        username,
+                        reason,
+                        executor,
+                        banTime,
+                        expireTime
+                );
+            } else {
+                return new PermanentBanRecord(
+                       id,
+                       username,
+                       reason,
+                       executor,
+                       banTime
+                );
+            }
         } else {
             return null;
         }

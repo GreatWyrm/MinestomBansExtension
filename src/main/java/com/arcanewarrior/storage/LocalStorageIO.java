@@ -69,14 +69,13 @@ public class LocalStorageIO implements StorageIO {
                 try {
                     UUID id = UUID.fromString(entry.getKey().toString());
                     BasicConfigurationNode node = entry.getValue();
-                    System.out.println(node.toString());
+                    String banTimeString = node.node("banTime").getString();
+                    ZonedDateTime banTime = ZonedDateTime.now();
+                    if(banTimeString != null) {
+                        banTime = ZonedDateTime.parse(banTimeString, DateTimeFormatter.ISO_ZONED_DATE_TIME);
+                    }
                     if(node.hasChild("expiryTime")) {
                         // Working with temp ban, load accordingly
-                        String banTimeString = node.node("banTime").getString();
-                        ZonedDateTime banTime = ZonedDateTime.now();
-                        if(banTimeString != null) {
-                            banTime = ZonedDateTime.parse(banTimeString, DateTimeFormatter.ISO_ZONED_DATE_TIME);
-                        }
                         String expireTimeString = node.node("expiryTime").getString();
                         ZonedDateTime expireTime = ZonedDateTime.now();
                         if(expireTimeString != null) {
@@ -94,11 +93,6 @@ public class LocalStorageIO implements StorageIO {
                             list.put(id, record);
                         }
                     } else {
-                        String banTimeString = node.node("banTime").getString();
-                        ZonedDateTime banTime = ZonedDateTime.now();
-                        if(banTimeString != null) {
-                            banTime = ZonedDateTime.parse(banTimeString, DateTimeFormatter.ISO_ZONED_DATE_TIME);
-                        }
                         PermanentBanRecord record = new PermanentBanRecord(
                                 id, node.node("username").getString("Unknown"),
                                 node.node("banReason").getString("The Ban Hammer has spoken!"),
