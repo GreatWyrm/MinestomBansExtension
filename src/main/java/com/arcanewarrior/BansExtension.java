@@ -25,7 +25,7 @@ public class BansExtension extends Extension {
         commandsManager.registerAllCommands(config.loadPermissionsFromConfig());
 
         eventsHandler = new EventsHandler(dataManager);
-        eventsHandler.registerEvents();
+        eventsHandler.registerEvents(getEventNode());
         getLogger().info("Finished Bans Extension Initialization.");
     }
 
@@ -33,7 +33,7 @@ public class BansExtension extends Extension {
     public void terminate() {
         getLogger().info("Terminating Bans Extension...");
         commandsManager.unregisterAllCommands();
-        eventsHandler.unregisterEvents();
+        eventsHandler.unregisterEvents(getEventNode());
     }
 
 

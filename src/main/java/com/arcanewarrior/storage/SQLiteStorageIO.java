@@ -3,16 +3,19 @@ package com.arcanewarrior.storage;
 import com.arcanewarrior.UUIDUtils;
 import com.arcanewarrior.data.BanRecord;
 import com.arcanewarrior.data.DatabaseDetails;
+import com.arcanewarrior.data.PermanentBanRecord;
+import com.arcanewarrior.data.TemporaryBanRecord;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.sql.*;
+import java.time.DateTimeException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-// Currently does not function properly, needs updating to handle the new data of bans
-@Deprecated
 public class SQLiteStorageIO implements StorageIO {
 
     private String sqLitePath;
@@ -22,6 +25,9 @@ public class SQLiteStorageIO implements StorageIO {
     private final String ipFieldName = "IP";
     private final String usernameFieldName = "username";
     private final String banReasonFieldName = "banreason";
+    private final String banExecutorFieldName = "executor";
+    private final String banTimeFieldName = "banTime";
+    private final String expiryTimeFieldName = "expiryTime";
     private final int banReasonMaxLength = 100;
 
     @Override
@@ -37,9 +43,10 @@ public class SQLiteStorageIO implements StorageIO {
             String playerTableQuery = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME +
                               "(" + uuidFieldName + " char(36) PRIMARY KEY NOT NULL," +
                               usernameFieldName + " varchar(16) NOT NULL," +
+                              banExecutorFieldName + " varchar(30) NOT NULL," +
+                              banTimeFieldName + " varchar(50) NOT NULL, " +
+                              expiryTimeFieldName + " varchar(50), " +
                               banReasonFieldName + " varchar(" + banReasonMaxLength + "))";
-            // TODO: For backwards compatibility, add ALTER TABLE statements here if the BanDetails gets any more information
-            // For example, a ban date
             String ipTableQuery = "CREATE TABLE IF NOT EXISTS " + IP_TABLE_NAME +
                     "(" + ipFieldName + " varchar(50) PRIMARY KEY NOT NULL," +
                     banReasonFieldName + " varchar(" + banReasonMaxLength + "))";
@@ -65,13 +72,20 @@ public class SQLiteStorageIO implements StorageIO {
                 String id = rs.getString(uuidFieldName);
                 String username = rs.getString(usernameFieldName);
                 String banReason = rs.getString(banReasonFieldName);
+                String banExecutor = rs.getString(banExecutorFieldName);
+                String banTime = rs.getString(banTimeFieldName);
+                String banExpiry = rs.getString(expiryTimeFieldName);
                 UUID uuid = UUIDUtils.makeUUIDFromStringWithoutDashes(id);
-                //map.put(uuid, new BanRecord(uuid, username, banReason));
+                if (banExpiry == null) {
+                    map.put(uuid, new PermanentBanRecord(uuid, username, banReason, banExecutor, ZonedDateTime.from(DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(banTime))));
+                } else {
+                    map.put(uuid, new TemporaryBanRecord(uuid, username, banReason, banExecutor, ZonedDateTime.from(DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(banTime)), ZonedDateTime.from(DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(banExpiry))));
+                }
             }
             rs.close();
             statement.close();
             connection.close();
-        } catch (SQLException e) {
+        } catch (SQLException | DateTimeException e) {
             e.printStackTrace();
         }
         return map;
@@ -102,17 +116,33 @@ public class SQLiteStorageIO implements StorageIO {
 
     @Override
     public void saveBan(@NotNull BanRecord details) {
-        String reason = " ";
+        String reason = details.banReason();
         if(reason.length() > banReasonMaxLength) {
             reason = reason.substring(0, banReasonMaxLength);
         }
         try {
             Connection connection = DriverManager.getConnection(sqLitePath);
-            String queryPrepared = "INSERT INTO " + TABLE_NAME + " (" + uuidFieldName + ", " + usernameFieldName + ", " + banReasonFieldName + ") VALUES (?,?,?)";
+            String queryPrepared = "INSERT INTO " + TABLE_NAME + " (" + uuidFieldName + ", " + usernameFieldName + ", " + banExecutorFieldName + ", " + banTimeFieldName + ", " + expiryTimeFieldName + ", " + banReasonFieldName + ") VALUES (?,?,?,?,?,?)";
             PreparedStatement statement = connection.prepareStatement(queryPrepared);
-            statement.setString(1, UUIDUtils.stripDashesFromUUID(details.uuid())); // Statements start from 1 >:(
-            statement.setString(2, details.username());
-            statement.setString(3, reason);
+            if(details instanceof TemporaryBanRecord temporaryBanRecord) {
+                statement.setString(1, UUIDUtils.stripDashesFromUUID(details.uuid())); // Statements start from 1 >:(
+                statement.setString(2, details.username());
+                statement.setString(3, temporaryBanRecord.banExecutor());
+                statement.setString(4, DateTimeFormatter.ISO_ZONED_DATE_TIME.format(temporaryBanRecord.banTime()));
+                statement.setString(5, DateTimeFormatter.ISO_ZONED_DATE_TIME.format(temporaryBanRecord.expiryTime()));
+                statement.setString(6, reason);
+            } else if(details instanceof PermanentBanRecord permanentBanRecord) {
+                statement.setString(1, UUIDUtils.stripDashesFromUUID(details.uuid())); // Statements start from 1 >:(
+                statement.setString(2, details.username());
+                statement.setString(3, permanentBanRecord.banExecutor());
+                statement.setString(4, DateTimeFormatter.ISO_ZONED_DATE_TIME.format(permanentBanRecord.banTime()));
+                statement.setString(5, null);
+                statement.setString(6, reason);
+                statement.executeUpdate();
+                statement.close();
+            } else {
+                return;
+            }
             statement.executeUpdate();
             statement.close();
             connection.close();

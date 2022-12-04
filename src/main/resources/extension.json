@@ -1,7 +1,7 @@
 {
   "entrypoint": "com.arcanewarrior.BansExtension",
   "name": "BansExtension",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "externalDependencies": {
     "repositories": [
       {
@@ -12,8 +12,8 @@
     "artifacts": [
       "org.spongepowered:configurate-gson:4.1.2",
       "org.spongepowered:configurate-yaml:4.1.2",
-      "org.xerial:sqlite-jdbc:3.36.0.3",
-      "org.mongodb:mongodb-driver-sync:4.6.0"
+      "org.xerial:sqlite-jdbc:3.40.0.0",
+      "org.mongodb:mongodb-driver-sync:4.7.1"
     ]
   }
 }

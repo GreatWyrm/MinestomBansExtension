@@ -36,7 +36,7 @@ public class DataManager {
 
     public String getBanReason(UUID id) {
         if(uuidBanList.containsKey(id)) {
-            return uuidBanList.get(id).username();
+            return uuidBanList.get(id).banReason();
         }
         return null;
     }

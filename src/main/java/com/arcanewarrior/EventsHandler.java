@@ -3,7 +3,9 @@ package com.arcanewarrior;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.MinecraftServer;
+import net.minestom.server.event.Event;
 import net.minestom.server.event.EventListener;
+import net.minestom.server.event.EventNode;
 import net.minestom.server.event.player.AsyncPlayerPreLoginEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,12 +19,12 @@ public class EventsHandler {
         banListener = new BanListener();
     }
 
-    public void registerEvents() {
-        MinecraftServer.getGlobalEventHandler().addListener(banListener);
+    public void registerEvents(EventNode<Event> parentNode) {
+        parentNode.addListener(banListener);
     }
 
-    public void unregisterEvents() {
-        MinecraftServer.getGlobalEventHandler().removeListener(banListener);
+    public void unregisterEvents(EventNode<Event> parentNode) {
+        parentNode.removeListener(banListener);
     }
 
 
@@ -35,8 +37,7 @@ public class EventsHandler {
         public @NotNull Result run(@NotNull AsyncPlayerPreLoginEvent event) {
             if(dataManager.isUUIDBanned(event.getPlayerUuid())) {
                 event.getPlayer().kick(Component.text("You have been banned from this server.\n" + dataManager.getBanReason(event.getPlayerUuid()), NamedTextColor.RED));
-            }
-            if(dataManager.isIPBanned(event.getPlayer().getPlayerConnection().getRemoteAddress())) {
+            } else if(dataManager.isIPBanned(event.getPlayer().getPlayerConnection().getRemoteAddress())) {
                 event.getPlayer().kick(Component.text("You have been banned from this server.\n" + dataManager.getIpBanReason(event.getPlayer().getPlayerConnection().getRemoteAddress()), NamedTextColor.RED));
             }
             return Result.SUCCESS;

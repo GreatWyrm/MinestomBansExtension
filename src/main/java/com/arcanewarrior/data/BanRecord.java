@@ -21,6 +21,12 @@ public interface BanRecord {
     String username();
 
     /**
+     * Gets the ban reason associated with the ban record
+     * @return The ban reason of the banned player
+     */
+    String banReason();
+
+    /**
      * Describes whether the player should be considered banned by this ban record. Will be always true for permanent bans, and false for temporary bans once they have expired
      * @return Whether the player is considered banned
      */
