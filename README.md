@@ -1,4 +1,6 @@
-﻿# Minestom Bans Extension
+This repository is now archived, as Minestom no longer supports extensions.
+ 
+# Minestom Bans Extension
 
 A simple extension that allows the kicking, banning, and unbanning of players, meant to replicate Vanilla Minecraft's system.
 
